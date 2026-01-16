@@ -362,8 +362,8 @@ onMounted(() => {
     nickname_shown.value = true
   }
 
-  reloadCurrent()
   refresh_interval.value = setInterval(updateState, 10000)
+  nextTick(() => reloadCurrent())
 })
 
 onBeforeUnmount(() => {
