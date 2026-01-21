@@ -71,7 +71,7 @@
           切歌
         </van-button>
       </div>
-      <div class="panel-buttons-group">
+      <div class="panel-volume-group panel-buttons-group">
         <van-button
           type="primary"
           icon="minus"
@@ -125,7 +125,7 @@
           @update:model-value="handleNickname"
         />
       </van-cell-group>
-      <van-cell-group class="panel-nickname-box" inset>
+      <van-cell-group class="panel-nickname-box" style="margin-bottom: 1rem;" inset>
         <van-field
           v-model="passkey"
           label="授权码"
@@ -471,9 +471,13 @@ onBeforeUnmount(() => {
   width: 100%;
 
   display: flex;
-  margin: 2.5rem 0.3rem 1rem 0.5rem;
+  margin: 2.5rem 0.3rem 1rem 0.3rem;
   justify-content: center;
   align-items: center;
+}
+
+.panel-volume-group {
+  margin: 0.5rem 0.3rem 1rem 0.3rem;
 }
 
 .panel-button {
@@ -487,7 +491,7 @@ onBeforeUnmount(() => {
 }
 
 .panel-nickname-box {
-  margin: 1rem 0.8rem;
+  margin: 0.3rem 0.8rem;
 }
 
 .empty-nickname {
