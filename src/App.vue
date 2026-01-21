@@ -57,6 +57,7 @@
           icon="pause-circle-o"
           class="panel-button"
           @click="handlePause"
+          :loading="loading_action"
         >
           暂停
         </van-button>
@@ -65,6 +66,7 @@
           icon="play-circle-o"
           class="panel-button"
           @click="handlePush"
+          :loading="loading_action"
         >
           切歌
         </van-button>
@@ -86,6 +88,35 @@
           round
         />
       </div>
+      <van-cell-group class="panel-nickname-box" inset>
+        <van-cell center title="显示假名">
+          <template #right-icon>
+            <van-switch
+              v-model="plugin_kana"
+              :loading="plugin_loading"
+              @click="handlePlugin(PluginAction.Kana, plugin_kana)"
+            />
+          </template>
+        </van-cell>
+        <van-cell center title="显示翻译">
+          <template #right-icon>
+            <van-switch
+              v-model="plugin_translated"
+              :loading="plugin_loading"
+              @click="handlePlugin(PluginAction.Translated, plugin_translated)"
+            />
+          </template>
+        </van-cell>
+        <van-cell center title="显示罗马音">
+          <template #right-icon>
+            <van-switch
+              v-model="plugin_roma"
+              :loading="plugin_loading"
+              @click="handlePlugin(PluginAction.Roma, plugin_roma)"
+            />
+          </template>
+        </van-cell>
+      </van-cell-group>
       <van-cell-group class="panel-nickname-box" inset>
         <van-field
           v-model="nickname"
@@ -151,7 +182,7 @@
 </template>
 
 <script setup lang="ts">
-import { pause, push, queryCurrent, updateVolume, VolumeAction } from './common/easyk_api';
+import { getPlugin, pause, PluginAction, push, queryCurrent, updatePlugin, updateVolume, VolumeAction } from './common/easyk_api';
 import BookList from './components/book-list.vue';
 import OutdateList from './components/outdate-list.vue';
 import Tabbar from './components/tabbar.vue';
@@ -196,7 +227,12 @@ const loading_book = ref<boolean>(false)
 
 const refresh_interval = ref()
 
-const isLoading = () => loading_books.value || loading_outdates.value || loading_action.value || loading_book.value
+const plugin_kana = ref<boolean>(false)
+const plugin_translated = ref<boolean>(false)
+const plugin_roma = ref<boolean>(false)
+const plugin_loading = ref<boolean>(false)
+
+const isLoading = () => loading_books.value || loading_outdates.value || loading_book.value
 
 const handleBubbleMove = () => {
   let max_top = 0
@@ -336,6 +372,16 @@ const handleVolume = (up : boolean) => {
   }
 }
 
+const handlePlugin = (id : PluginAction, value : any) => {
+  plugin_loading.value = true
+  updatePlugin(id, value).then((plugins) => {
+    plugin_kana.value = plugins[PluginAction.Kana] ?? false
+    plugin_translated.value = plugins[PluginAction.Translated] ?? false
+    plugin_roma.value = plugins[PluginAction.Roma] ?? false
+  }).catch((reason) => console.log(`获取当前插件状态失败 - ${reason}`))
+  .finally(() => plugin_loading.value = false)
+}
+
 onMounted(() => {
   let max_top = 0
   
@@ -363,7 +409,17 @@ onMounted(() => {
   }
 
   refresh_interval.value = setInterval(updateState, 10000)
-  nextTick(() => reloadCurrent())
+  nextTick(() => {
+    reloadCurrent()
+
+    plugin_loading.value = true
+    getPlugin().then((plugins) => {
+      plugin_kana.value = plugins[PluginAction.Kana] ?? false
+      plugin_translated.value = plugins[PluginAction.Translated] ?? false
+      plugin_roma.value = plugins[PluginAction.Roma] ?? false
+    }).catch((reason) => console.log(`获取当前插件状态失败 - ${reason}`))
+    .finally(() => plugin_loading.value = false)
+  })
 })
 
 onBeforeUnmount(() => {

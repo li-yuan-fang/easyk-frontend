@@ -18,7 +18,16 @@ export {
     upload_quiry,
     upload_block,
     updateVolume,
-    VolumeAction
+    VolumeAction,
+    getPlugin,
+    updatePlugin,
+    PluginAction
+}
+
+enum PluginAction {
+    Kana = 'kana',
+    Translated = 'translated',
+    Roma = 'roma'
 }
 
 enum VolumeAction {
@@ -264,6 +273,39 @@ const updateVolume = (action : VolumeAction, value : number) => {
             } else {
                 reject('未知错误')
             }
+        }).catch(() => reject('无法连接到服务器'))
+    })
+}
+
+const getPlugin = () => {
+    return new Promise<any>((resolve, reject) => {
+        axios.get(`${host}/plugin`, {
+            timeout: 5000
+        }).then((resp) => {
+            if (resp.status !== 200) {
+                reject(`请求失败 - ${resp.status}`)
+                return
+            }
+
+            resolve(resp.data)
+        }).catch(() => reject('无法连接到服务器'))
+    })
+}
+
+const updatePlugin = (id : PluginAction, value : any) => {
+    return new Promise<any>((resolve, reject) => {
+        axios.post(`${host}/plugin`, {
+            id,
+            value
+        }, {
+            timeout: 5000
+        }).then((resp) => {
+            if (resp.status !== 200) {
+                reject(`请求失败 - ${resp.status}`)
+                return
+            }
+
+            resolve(resp.data)
         }).catch(() => reject('无法连接到服务器'))
     })
 }
