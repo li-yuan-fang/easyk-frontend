@@ -34,7 +34,7 @@
       magnetic="x"
       class="control-bubble"
       @offset-change="handleBubbleMove"
-      @click="panel_shown = true"
+      @click="handlePanelShow"
     />
     <van-overlay style="z-index: 3000;" :show="isLoading()">
       <div class="loading-wrapper">
@@ -340,6 +340,11 @@ const handlePasteEmptyPassKey = async () => {
     }
 }
 
+const handlePanelShow = () => {
+  reloadPlugins()
+  panel_shown.value = true
+}
+
 const reloadCurrent = () => {
   queryCurrent().then((c) => {
     current.value = c
@@ -382,6 +387,16 @@ const handlePlugin = (id : PluginAction, value : any) => {
   .finally(() => plugin_loading.value = false)
 }
 
+const reloadPlugins = () => {
+  plugin_loading.value = true
+  getPlugin().then((plugins) => {
+    plugin_kana.value = plugins[PluginAction.Kana] ?? false
+    plugin_translated.value = plugins[PluginAction.Translated] ?? false
+    plugin_roma.value = plugins[PluginAction.Roma] ?? false
+  }).catch((reason) => console.log(`获取当前插件状态失败 - ${reason}`))
+  .finally(() => plugin_loading.value = false)
+}
+
 onMounted(() => {
   let max_top = 0
   
@@ -411,14 +426,7 @@ onMounted(() => {
   refresh_interval.value = setInterval(updateState, 10000)
   nextTick(() => {
     reloadCurrent()
-
-    plugin_loading.value = true
-    getPlugin().then((plugins) => {
-      plugin_kana.value = plugins[PluginAction.Kana] ?? false
-      plugin_translated.value = plugins[PluginAction.Translated] ?? false
-      plugin_roma.value = plugins[PluginAction.Roma] ?? false
-    }).catch((reason) => console.log(`获取当前插件状态失败 - ${reason}`))
-    .finally(() => plugin_loading.value = false)
+    reloadPlugins()
   })
 })
 
