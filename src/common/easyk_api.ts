@@ -19,12 +19,13 @@ export {
     upload_block,
     updateVolume,
     VolumeAction,
-    getPlugin,
-    updatePlugin,
-    PluginAction
+    getPanel,
+    updatePanel,
+    PanelAction
 }
 
-enum PluginAction {
+enum PanelAction {
+    Accompaniment = 'accompaniment',
     Kana = 'kana',
     Translated = 'translated',
     Roma = 'roma'
@@ -277,9 +278,9 @@ const updateVolume = (action : VolumeAction, value : number) => {
     })
 }
 
-const getPlugin = () => {
+const getPanel = () => {
     return new Promise<any>((resolve, reject) => {
-        axios.get(`${host}/plugin`, {
+        axios.get(`${host}/panel`, {
             timeout: 5000
         }).then((resp) => {
             if (resp.status !== 200) {
@@ -292,9 +293,9 @@ const getPlugin = () => {
     })
 }
 
-const updatePlugin = (id : PluginAction, value : any) => {
+const updatePanel = (id : PanelAction, value : any) => {
     return new Promise<any>((resolve, reject) => {
-        axios.post(`${host}/plugin`, {
+        axios.post(`${host}/panel`, {
             id,
             value
         }, {

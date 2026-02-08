@@ -99,7 +99,7 @@ const props = defineProps(['modelValue'])
 const emit = defineEmits(['update:modelValue', 'loading', 'refresh'])
 
 const video_type = ref<number>(0)
-const video_type_cascader = ref<string>('')
+const video_type_cascader = ref<string>('上传视频')
 const type_shown = ref<boolean>(false)
 
 const uploading = ref<boolean>(false)
@@ -173,7 +173,7 @@ const handleVideoRead = (uploaded : any) => {
 const resetDialog = () => {
     title.value = ''
     video_type.value = 0
-    video_type_cascader.value = ''
+    video_type_cascader.value = '上传视频'
     preview_snapshot.value = ''
     BV_code.value = ''
     upload_files.value = []

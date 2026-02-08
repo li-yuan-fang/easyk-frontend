@@ -94,7 +94,7 @@
             <van-switch
               v-model="plugin_kana"
               :loading="plugin_loading"
-              @click="handlePlugin(PluginAction.Kana, plugin_kana)"
+              @click="handlePanel(PanelAction.Kana, plugin_kana)"
             />
           </template>
         </van-cell>
@@ -103,7 +103,7 @@
             <van-switch
               v-model="plugin_translated"
               :loading="plugin_loading"
-              @click="handlePlugin(PluginAction.Translated, plugin_translated)"
+              @click="handlePanel(PanelAction.Translated, plugin_translated)"
             />
           </template>
         </van-cell>
@@ -112,7 +112,7 @@
             <van-switch
               v-model="plugin_roma"
               :loading="plugin_loading"
-              @click="handlePlugin(PluginAction.Roma, plugin_roma)"
+              @click="handlePanel(PanelAction.Roma, plugin_roma)"
             />
           </template>
         </van-cell>
@@ -182,7 +182,7 @@
 </template>
 
 <script setup lang="ts">
-import { getPlugin, pause, PluginAction, push, queryCurrent, updatePlugin, updateVolume, VolumeAction } from './common/easyk_api';
+import { getPanel, pause, PanelAction as PanelAction, push, queryCurrent, updatePanel, updateVolume, VolumeAction } from './common/easyk_api';
 import BookList from './components/book-list.vue';
 import OutdateList from './components/outdate-list.vue';
 import Tabbar from './components/tabbar.vue';
@@ -341,7 +341,7 @@ const handlePasteEmptyPassKey = async () => {
 }
 
 const handlePanelShow = () => {
-  reloadPlugins()
+  reloadPanel()
   panel_shown.value = true
 }
 
@@ -370,30 +370,29 @@ const handleVolume = (up : boolean) => {
         return
       }
 
-      console.log(volume_value.value)
       updateVolume(volume_value.value > 0 ? VolumeAction.Up : VolumeAction.Down, Math.abs(volume_value.value))
       volume_waiting.value = false
     }, 1000)
   }
 }
 
-const handlePlugin = (id : PluginAction, value : any) => {
+const handlePanel = (id : PanelAction, value : any) => {
   plugin_loading.value = true
-  updatePlugin(id, value).then((plugins) => {
-    plugin_kana.value = plugins[PluginAction.Kana] ?? false
-    plugin_translated.value = plugins[PluginAction.Translated] ?? false
-    plugin_roma.value = plugins[PluginAction.Roma] ?? false
+  updatePanel(id, value).then((panel) => {
+    plugin_kana.value = panel[PanelAction.Kana] ?? false
+    plugin_translated.value = panel[PanelAction.Translated] ?? false
+    plugin_roma.value = panel[PanelAction.Roma] ?? false
   }).catch((reason) => console.log(`获取当前插件状态失败 - ${reason}`))
   .finally(() => plugin_loading.value = false)
 }
 
-const reloadPlugins = () => {
+const reloadPanel = () => {
   plugin_loading.value = true
-  getPlugin().then((plugins) => {
-    plugin_kana.value = plugins[PluginAction.Kana] ?? false
-    plugin_translated.value = plugins[PluginAction.Translated] ?? false
-    plugin_roma.value = plugins[PluginAction.Roma] ?? false
-  }).catch((reason) => console.log(`获取当前插件状态失败 - ${reason}`))
+  getPanel().then((plugins) => {
+    plugin_kana.value = plugins[PanelAction.Kana] ?? false
+    plugin_translated.value = plugins[PanelAction.Translated] ?? false
+    plugin_roma.value = plugins[PanelAction.Roma] ?? false
+  }).catch((reason) => console.log(`获取当前面板状态失败 - ${reason}`))
   .finally(() => plugin_loading.value = false)
 }
 
@@ -426,7 +425,7 @@ onMounted(() => {
   refresh_interval.value = setInterval(updateState, 10000)
   nextTick(() => {
     reloadCurrent()
-    reloadPlugins()
+    reloadPanel()
   })
 })
 
