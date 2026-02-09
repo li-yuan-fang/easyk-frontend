@@ -88,44 +88,57 @@
           round
         />
       </div>
+      <van-cell-group
+        v-if="panel_accompaniment_valid"
+        class="panel-nickname-box"
+        inset
+      >
+        <van-cell center title="伴唱">
+          <template #right-icon>
+            <van-switch
+              v-model="panel_accompaniment"
+              :loading="panel_loading"
+              @click="handlePanel(PanelAction.Accompaniment, panel_accompaniment)"
+            />
+          </template>
+        </van-cell>
+      </van-cell-group>
       <van-cell-group class="panel-nickname-box" inset>
         <van-cell center title="显示假名">
           <template #right-icon>
             <van-switch
-              v-model="plugin_kana"
-              :loading="plugin_loading"
-              @click="handlePanel(PanelAction.Kana, plugin_kana)"
+              v-model="panel_kana"
+              :loading="panel_loading"
+              @click="handlePanel(PanelAction.Kana, panel_kana)"
             />
           </template>
         </van-cell>
         <van-cell center title="显示翻译">
           <template #right-icon>
             <van-switch
-              v-model="plugin_translated"
-              :loading="plugin_loading"
-              @click="handlePanel(PanelAction.Translated, plugin_translated)"
+              v-model="panel_translated"
+              :loading="panel_loading"
+              @click="handlePanel(PanelAction.Translated, panel_translated)"
             />
           </template>
         </van-cell>
         <van-cell center title="显示罗马音">
           <template #right-icon>
             <van-switch
-              v-model="plugin_roma"
-              :loading="plugin_loading"
-              @click="handlePanel(PanelAction.Roma, plugin_roma)"
+              v-model="panel_roma"
+              :loading="panel_loading"
+              @click="handlePanel(PanelAction.Roma, panel_roma)"
             />
           </template>
         </van-cell>
       </van-cell-group>
-      <van-cell-group class="panel-nickname-box" inset>
+      <van-cell-group class="panel-nickname-box" style="margin-bottom: 1rem;" inset>
         <van-field
           v-model="nickname"
           label="昵称"
           placeholder="在这写你的ID"
           @update:model-value="handleNickname"
         />
-      </van-cell-group>
-      <van-cell-group class="panel-nickname-box" style="margin-bottom: 1rem;" inset>
         <van-field
           v-model="passkey"
           label="授权码"
@@ -227,10 +240,12 @@ const loading_book = ref<boolean>(false)
 
 const refresh_interval = ref()
 
-const plugin_kana = ref<boolean>(false)
-const plugin_translated = ref<boolean>(false)
-const plugin_roma = ref<boolean>(false)
-const plugin_loading = ref<boolean>(false)
+const panel_accompaniment_valid = ref<boolean>(false)
+const panel_accompaniment = ref<boolean>(false)
+const panel_kana = ref<boolean>(false)
+const panel_translated = ref<boolean>(false)
+const panel_roma = ref<boolean>(false)
+const panel_loading = ref<boolean>(false)
 
 const isLoading = () => loading_books.value || loading_outdates.value || loading_book.value
 
@@ -377,23 +392,26 @@ const handleVolume = (up : boolean) => {
 }
 
 const handlePanel = (id : PanelAction, value : any) => {
-  plugin_loading.value = true
+  panel_loading.value = true
   updatePanel(id, value).then((panel) => {
-    plugin_kana.value = panel[PanelAction.Kana] ?? false
-    plugin_translated.value = panel[PanelAction.Translated] ?? false
-    plugin_roma.value = panel[PanelAction.Roma] ?? false
+    panel_kana.value = panel[PanelAction.Kana] ?? false
+    panel_translated.value = panel[PanelAction.Translated] ?? false
+    panel_roma.value = panel[PanelAction.Roma] ?? false
   }).catch((reason) => console.log(`获取当前插件状态失败 - ${reason}`))
-  .finally(() => plugin_loading.value = false)
+  .finally(() => panel_loading.value = false)
 }
 
 const reloadPanel = () => {
-  plugin_loading.value = true
-  getPanel().then((plugins) => {
-    plugin_kana.value = plugins[PanelAction.Kana] ?? false
-    plugin_translated.value = plugins[PanelAction.Translated] ?? false
-    plugin_roma.value = plugins[PanelAction.Roma] ?? false
+  panel_loading.value = true
+  getPanel().then((panel) => {
+    panel_accompaniment_valid.value = panel[PanelAction.Accompaniment] != undefined
+    if (panel_accompaniment_valid.value) panel_accompaniment.value = panel[PanelAction.Accompaniment] ?? false
+
+    panel_kana.value = panel[PanelAction.Kana] ?? false
+    panel_translated.value = panel[PanelAction.Translated] ?? false
+    panel_roma.value = panel[PanelAction.Roma] ?? false
   }).catch((reason) => console.log(`获取当前面板状态失败 - ${reason}`))
-  .finally(() => plugin_loading.value = false)
+  .finally(() => panel_loading.value = false)
 }
 
 onMounted(() => {
