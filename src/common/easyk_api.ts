@@ -1,4 +1,4 @@
-import axios from "axios"
+import axios, { AxiosError } from "axios"
 import type { BookList, BookListItem } from "./book_interfaces"
 import { type UploadQuiry, type UploadSession } from "./uploader"
 
@@ -225,13 +225,14 @@ const upload_apply = (size : number) => {
         }, {
             timeout: 5000
         }).then((resp) => {
-            if (resp.status !== 200) {
-                reject(`请求失败 - ${resp.status}`)
-                return
-            }
-
             resolve(<UploadSession> resp.data)
-        }).catch(() => reject('无法连接到服务器'))
+        }).catch((reason : AxiosError) => {
+            if (reason.status == 413) {
+                reject('视频文件过大')
+            } else {
+                reject(reason.response?.statusText || '未知错误')
+            }
+        })
     })
 }
 

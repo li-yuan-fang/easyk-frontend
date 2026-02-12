@@ -235,6 +235,6 @@ const uploadVideo = (content : string, callback : (progress : number) => (void))
             if (resp.chunk) chunk_size = resp.chunk
 
             process_upload()
-        }).catch(() => reject('创建上传会话失败'))
+        }).catch((reason) => reject(`创建上传会话失败 - ${reason}`))
     })
 }
