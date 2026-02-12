@@ -28,7 +28,7 @@ import { ref } from "vue"
                 切歌
             </van-button>
         </div>
-        <div class="panel-volume-group panel-buttons-group">
+        <!-- <div class="panel-volume-group panel-buttons-group">
             <van-button
                 type="primary"
                 icon="minus"
@@ -44,6 +44,19 @@ import { ref } from "vue"
                 @click="handleVolume(true)"
                 round
             />
+        </div> -->
+        <div class="panel-volume-group panel-buttons-group">
+            <div class="panel-volume-content">
+                <van-icon name="volume-o" />
+                <van-slider
+                    class="panel-volume"
+                    v-model="panel_volume"
+                    bar-height="0.25rem"
+                    @update:model-value="handleVolume"
+                    @change="handleVolumeComplete"
+                />
+                <text>{{ panel_volume }}</text>
+            </div>
         </div>
         <van-cell-group
             v-if="panel_accompaniment_valid"
@@ -125,101 +138,107 @@ const panel_shown = ref<boolean>(false)
 //按键加载
 const loading_action = ref<boolean>(false)
 
-//音量控制
-const volume_waiting = ref<boolean>(false)
-const volume_value = ref<number>(0)
+//面板
+const panel_volume = ref<number>(0)
 
-//效果开关
 const panel_accompaniment_valid = ref<boolean>(false)
 const panel_accompaniment = ref<boolean>(false)
+
 const panel_kana = ref<boolean>(false)
 const panel_translated = ref<boolean>(false)
 const panel_roma = ref<boolean>(false)
 const panel_offset = ref<number>(0)
+
 const panel_loading = ref<boolean>(false)
 
 //面板按键 - 暂停
 const handlePause = () => {
-  loading_action.value = true
-  pause().then(() => {}).catch(() => {
-    showToast({
-      icon: 'close',
-      type: 'fail',
-      zIndex: '3002',
-      message: '暂停失败',
-      closeOnClick: true
-    })
-  }).finally(() => loading_action.value = false)
+    loading_action.value = true
+    pause().then(() => {}).catch(() => {
+        showToast({
+        icon: 'close',
+        type: 'fail',
+        zIndex: '3002',
+        message: '暂停失败',
+        closeOnClick: true
+        })
+    }).finally(() => loading_action.value = false)
 }
 
 //面板按键 - 切歌
 const handlePush = () => {
-  loading_action.value = true
-  push().then(() => {
-    showToast({
-      icon: 'passed',
-      type: 'success',
-      zIndex: '3002',
-      message: '切歌成功',
-      closeOnClick: true
-    })
-  }).catch(() => {
-    showToast({
-      icon: 'close',
-      type: 'fail',
-      zIndex: '3002',
-      message: '切歌失败',
-      closeOnClick: true
-    })
-  }).finally(() => loading_action.value = false)
-}
-
-//处理音量键
-const handleVolume = (up : boolean) => {
-  if (volume_waiting.value) {
-    volume_value.value += up ? 1 : -1
-  } else {
-    volume_waiting.value = true
-    volume_value.value = up ? 1 : -1
-
-    setTimeout(() => {
-      if (volume_value.value == 0) {
-        volume_waiting.value = false
-        return
-      }
-
-      updateVolume(volume_value.value > 0 ? VolumeAction.Up : VolumeAction.Down, Math.abs(volume_value.value))
-      volume_waiting.value = false
-    }, 1000)
-  }
+    loading_action.value = true
+    push().then(() => {
+        showToast({
+        icon: 'passed',
+        type: 'success',
+        zIndex: '3002',
+        message: '切歌成功',
+        closeOnClick: true
+        })
+    }).catch(() => {
+        showToast({
+        icon: 'close',
+        type: 'fail',
+        zIndex: '3002',
+        message: '切歌失败',
+        closeOnClick: true
+        })
+    }).finally(() => loading_action.value = false)
 }
 
 //更新面板显示状态
 const refreshPanel = (panel : any) => {
-  panel_accompaniment_valid.value = panel[PanelAction.Accompaniment] != undefined
-  if (panel_accompaniment_valid.value) panel_accompaniment.value = panel[PanelAction.Accompaniment] ?? false
+    panel_volume.value = Math.round((panel[PanelAction.Volume] ?? 0) * 100)
 
-  panel_kana.value = panel[PanelAction.Kana] ?? false
-  panel_translated.value = panel[PanelAction.Translated] ?? false
-  panel_roma.value = panel[PanelAction.Roma] ?? false
+    panel_accompaniment_valid.value = panel[PanelAction.Accompaniment] != undefined
+    if (panel_accompaniment_valid.value) panel_accompaniment.value = panel[PanelAction.Accompaniment] ?? false
 
-  panel_offset.value = panel[PanelAction.Offset] ?? 0
+    panel_kana.value = panel[PanelAction.Kana] ?? false
+    panel_translated.value = panel[PanelAction.Translated] ?? false
+    panel_roma.value = panel[PanelAction.Roma] ?? false
+
+    panel_offset.value = panel[PanelAction.Offset] ?? 0
 }
 
 //提交面板操作
-const handlePanel = (id : PanelAction, value : any) => {
-  panel_loading.value = true
-  updatePanel(id, value).then(refreshPanel)
-  .catch((reason) => console.log(`获取当前插件状态失败 - ${reason}`))
-  .finally(() => panel_loading.value = false)
+const handlePanel = (id : PanelAction, value : any, refresh : boolean = true) => {
+    panel_loading.value = true
+    updatePanel(id, value).then((panel) => {
+        if (refresh) refreshPanel(panel)
+    }).catch((reason) => console.log(`获取当前插件状态失败 - ${reason}`))
+    .finally(() => panel_loading.value = false)
 }
 
 //拉取面板信息
 const reloadPanel = () => {
-  panel_loading.value = true
-  getPanel().then(refreshPanel)
-  .catch((reason) => console.log(`获取当前面板状态失败 - ${reason}`))
-  .finally(() => panel_loading.value = false)
+    panel_loading.value = true
+    getPanel().then(refreshPanel)
+    .catch((reason) => console.log(`获取当前面板状态失败 - ${reason}`))
+    .finally(() => panel_loading.value = false)
+}
+
+//提交音量更新
+const handleVolume = () => {
+    if (panel_loading.value) return
+
+    handlePanel(PanelAction.Volume, panel_volume.value / 100, false)
+}
+
+//提交最终音量更新
+const handleVolumeComplete = () => {
+    if (panel_loading.value) {
+        //循环检测并保证提交
+        let interval = setInterval(() => {
+            if (!panel_loading.value) {
+                clearInterval(interval)
+                handlePanel(PanelAction.Volume, panel_volume.value / 100)
+            }
+        }, 100)
+        return
+    }
+
+    handlePanel(PanelAction.Volume, panel_volume.value / 100)
 }
 
 //显示面板
@@ -239,40 +258,55 @@ defineExpose({ show, isShown })
 <style>
 
 .panel-dialog {
-  display: flex;
-  --van-button-primary-background: #409EFF;
-  --van-button-primary-border-color: rgb(121, 187, 255);
-  background: rgb(235, 242, 249);
-  z-index: 103;
-  flex-direction: column;
-  overflow: hidden;
+    display: flex;
+    --van-button-primary-background: #409EFF;
+    --van-button-primary-border-color: rgb(121, 187, 255);
+    background: rgb(235, 242, 249);
+    z-index: 103;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 .panel-buttons-group {
-  width: 100%;
+    width: 100%;
 
-  display: flex;
-  margin: 2.5rem 0.3rem 1rem 0.3rem;
-  justify-content: center;
-  align-items: center;
+    display: flex;
+    margin: 2.5rem 0.3rem 1rem 0.3rem;
+    justify-content: center;
+    align-items: center;
 }
 
 .panel-volume-group {
-  margin: 0.5rem 0.3rem 1rem 0.3rem;
+    flex-direction: row;
+    margin: 0.5rem 0.3rem 1rem 0.3rem;
+}
+
+.panel-volume-content {
+    display: flex;
+    flex-direction: row;
+    justify-content: start;
+    align-items: center;
+
+    flex: 1;
+    margin: 0 2rem;
+}
+
+.panel-volume {
+    margin: 0 1.5rem;
 }
 
 .panel-button {
-  font-size: 1rem;
-  margin: 0 3rem;
+    font-size: 1rem;
+    margin: 0 3rem;
 }
 
 .panel-button-round {
-  width: var(--van-button-default-height);
-  height: var(--van-button-default-height);
+    width: var(--van-button-default-height);
+    height: var(--van-button-default-height);
 }
 
 .panel-nickname-box {
-  margin: 0.3rem 0.8rem;
+    margin: 0.3rem 0.8rem;
 }
 
 </style>

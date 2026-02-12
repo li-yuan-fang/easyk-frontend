@@ -25,6 +25,7 @@ export {
 }
 
 enum PanelAction {
+    Volume = 'volume',
     Accompaniment = 'accompaniment',
 
     Kana = 'kana',
