@@ -1,16 +1,15 @@
 import { sha256 } from "js-sha256";
 import { Mutex } from 'async-mutex';
 import { upload_apply, upload_block, upload_quiry } from "./easyk_api";
-import { showToast } from "vant";
 
 export {
     getBase64Bytes,
-    uploadVideo,
-    chunk_size
+    uploadVideo
 }
 
 export type {
-    UploadQuiry
+    UploadQuiry,
+    UploadSession
 }
 
 interface UploadQuiry {
@@ -21,8 +20,13 @@ interface UploadQuiry {
     require?: Array<number>;
 }
 
+interface UploadSession {
+    id: string;
+    chunk?: number;
+}
+
 const base64_prefix = 'base64,'
-const chunk_size = 1 * 1024 * 1024
+const default_chunk_size = 1 * 1024 * 1024
 const working_thread = 4
 
 const getBase64Bytes = (content : string) : Uint8Array => {
@@ -40,6 +44,8 @@ const uploadVideo = (content : string, callback : (progress : number) => (void))
     return new Promise<string>((resolve, reject) => {
         let data = getBase64Bytes(content)
         let content_id : string | undefined
+
+        let chunk_size : number = default_chunk_size
 
         const process_upload = () => {
             let lock_queue = new Mutex()
@@ -113,7 +119,7 @@ const uploadVideo = (content : string, callback : (progress : number) => (void))
                             working++
                             release()
 
-                            upload_block(index, buf_str, sha256(buf))
+                            upload_block(index, buf_str, sha256(buf), chunk_size)
                             .then(upload_working_resolve)
                             .catch(upload_working_reject)
                         })
@@ -224,8 +230,10 @@ const uploadVideo = (content : string, callback : (progress : number) => (void))
         }
 
         upload_apply(data.length)
-        .then((id) => {
-            content_id = id
+        .then((resp) => {
+            content_id = resp.id
+            if (resp.chunk) chunk_size = resp.chunk
+
             process_upload()
         }).catch(() => reject('创建上传会话失败'))
     })

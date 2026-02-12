@@ -1,6 +1,6 @@
 import axios from "axios"
 import type { BookList, BookListItem } from "./book_interfaces"
-import { chunk_size, type UploadQuiry } from "./uploader"
+import { type UploadQuiry, type UploadSession } from "./uploader"
 
 const host : string = '/api'
 
@@ -219,7 +219,7 @@ const upload_quiry = () => {
 }
 
 const upload_apply = (size : number) => {
-    return new Promise<string>((resolve, reject) => {
+    return new Promise<UploadSession>((resolve, reject) => {
         axios.post(`${host}/upload`, {
             size
         }, {
@@ -230,12 +230,12 @@ const upload_apply = (size : number) => {
                 return
             }
 
-            resolve(resp.data['id'])
+            resolve(<UploadSession> resp.data)
         }).catch(() => reject('无法连接到服务器'))
     })
 }
 
-const upload_block = (index : number, data : string, hash : string) => {
+const upload_block = (index : number, data : string, hash : string, maxContentLength : number) => {
     return new Promise<boolean>((resolve, reject) => {
         axios.put(`${host}/upload`, data, {
             headers: {
@@ -244,7 +244,7 @@ const upload_block = (index : number, data : string, hash : string) => {
                 'Content-Type': 'text/plain'
             },
             timeout: 10000,
-            maxContentLength: chunk_size
+            maxContentLength
         }).then((resp) => {
             if (resp.status !== 200) {
                 reject(`请求失败 - ${resp.status}`)
