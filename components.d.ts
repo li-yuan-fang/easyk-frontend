@@ -14,6 +14,7 @@ declare module 'vue' {
     BookDialog: typeof import('./src/components/book-dialog.vue')['default']
     BookList: typeof import('./src/components/book-list.vue')['default']
     OutdateList: typeof import('./src/components/outdate-list.vue')['default']
+    PassDialog: typeof import('./src/components/pass-dialog.vue')['default']
     Tabbar: typeof import('./src/components/tabbar.vue')['default']
     VanBackTop: typeof import('vant/es')['BackTop']
     VanButton: typeof import('vant/es')['Button']
