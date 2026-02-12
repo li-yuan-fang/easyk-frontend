@@ -26,9 +26,12 @@ export {
 
 enum PanelAction {
     Accompaniment = 'accompaniment',
+
     Kana = 'kana',
     Translated = 'translated',
-    Roma = 'roma'
+    Roma = 'roma',
+
+    Offset = 'offset'
 }
 
 enum VolumeAction {

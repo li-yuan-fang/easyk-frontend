@@ -36,8 +36,8 @@ import { getCookie, setCookie } from '../common/cookies';
 
 const empty_regex = new RegExp(/^\s*$/)
 
-const props = defineProps(['modelValue', 'nickname', 'passkey'])
-const emit = defineEmits(['update:modelValue', 'update:nickname', 'update:passkey', 'refresh'])
+const props = defineProps(['modelValue'])
+const emit = defineEmits(['update:modelValue'])
 
 const nickname = ref<string>('')
 const passkey = ref<string>('')
@@ -56,8 +56,6 @@ const handleConfirm = () => {
         setCookie('key', passkey.value, 7)
 
         emit('update:modelValue', false)
-        emit('update:nickname', nickname.value)
-        emit('update:passkey', passkey.value)
     }
 }
 

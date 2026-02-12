@@ -13,7 +13,9 @@ declare module 'vue' {
   export interface GlobalComponents {
     BookDialog: typeof import('./src/components/book-dialog.vue')['default']
     BookList: typeof import('./src/components/book-list.vue')['default']
+    OffsetDialog: typeof import('./src/components/offset-dialog.vue')['default']
     OutdateList: typeof import('./src/components/outdate-list.vue')['default']
+    Panel: typeof import('./src/components/panel.vue')['default']
     PassDialog: typeof import('./src/components/pass-dialog.vue')['default']
     Tabbar: typeof import('./src/components/tabbar.vue')['default']
     VanBackTop: typeof import('vant/es')['BackTop']
@@ -31,6 +33,7 @@ declare module 'vue' {
     VanOverlay: typeof import('vant/es')['Overlay']
     VanPopup: typeof import('vant/es')['Popup']
     VanPullRefresh: typeof import('vant/es')['PullRefresh']
+    VanSlider: typeof import('vant/es')['Slider']
     VanSwitch: typeof import('vant/es')['Switch']
     VanTabbar: typeof import('vant/es')['Tabbar']
     VanTabbarItem: typeof import('vant/es')['TabbarItem']
