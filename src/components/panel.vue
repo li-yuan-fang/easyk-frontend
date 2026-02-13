@@ -62,7 +62,7 @@ import { ref } from "vue"
                 title="歌词选项"
                 center
                 is-link
-                :arrow-direction="panel_lyrics_shown ? 'down' : 'left'"
+                :arrow-direction="panel_lyrics_shown ? 'down' : 'right'"
                 @click="panel_lyrics_shown = !panel_lyrics_shown"
             />
             <van-cell v-if="panel_lyrics_shown" title="显示假名" center>
