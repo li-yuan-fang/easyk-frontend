@@ -95,6 +95,8 @@ import { renderPreview } from '../common/video_preview';
 import { book } from '../common/easyk_api';
 import { uploadVideo } from '../common/uploader';
 
+const empty_regex = new RegExp(/^\s*$/)
+
 const props = defineProps(['modelValue'])
 const emit = defineEmits(['update:modelValue', 'loading', 'refresh'])
 
@@ -180,7 +182,7 @@ const resetDialog = () => {
 }
 
 const handleBook = () => {
-    if (title.value.length == 0) {
+    if (title.value.length == 0 || title.value.match(empty_regex)) {
         showToast({
             icon: 'close',
             type: 'fail',
@@ -188,7 +190,7 @@ const handleBook = () => {
             message: '歌名不能为空',
             closeOnClick: true
         })
-        
+
         return
     }
 
