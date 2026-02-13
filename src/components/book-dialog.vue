@@ -180,6 +180,18 @@ const resetDialog = () => {
 }
 
 const handleBook = () => {
+    if (title.value.length == 0) {
+        showToast({
+            icon: 'close',
+            type: 'fail',
+            zIndex: '3002',
+            message: '歌名不能为空',
+            closeOnClick: true
+        })
+        
+        return
+    }
+
     emit('loading', true)
 
     const commitBook = (content : string) => {
