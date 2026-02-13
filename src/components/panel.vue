@@ -28,23 +28,6 @@ import { ref } from "vue"
                 切歌
             </van-button>
         </div>
-        <!-- <div class="panel-volume-group panel-buttons-group">
-            <van-button
-                type="primary"
-                icon="minus"
-                class="panel-button-round panel-button"
-                @click="handleVolume(false)"
-                round
-            />
-            <text>音量</text>
-            <van-button
-                type="primary"
-                icon="plus"
-                class="panel-button-round panel-button"
-                @click="handleVolume(true)"
-                round
-            />
-        </div> -->
         <div class="panel-volume-group panel-buttons-group">
             <div class="panel-volume-content">
                 <van-icon name="volume-o" />
@@ -52,6 +35,7 @@ import { ref } from "vue"
                     class="panel-volume"
                     v-model="panel_volume"
                     bar-height="0.25rem"
+                    inactive-color="#d0d0d0"
                     @update:model-value="handleVolume"
                     @change="handleVolumeComplete"
                 />
