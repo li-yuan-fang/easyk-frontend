@@ -68,13 +68,13 @@ import { ref } from "vue"
                 </template>
             </van-cell>
             <van-cell center title="显示翻译">
-            <template #right-icon>
-                <van-switch
-                    v-model="panel_translated"
-                    :loading="panel_loading"
-                    @click="handlePanel(PanelAction.Translated, panel_translated)"
-                />
-            </template>
+                <template #right-icon>
+                    <van-switch
+                        v-model="panel_translated"
+                        :loading="panel_loading"
+                        @click="handlePanel(PanelAction.Translated, panel_translated)"
+                    />
+                </template>
             </van-cell>
             <van-cell center title="显示罗马音">
                 <template #right-icon>
@@ -92,6 +92,15 @@ import { ref } from "vue"
             />
         </van-cell-group>
         <van-cell-group class="panel-nickname-box" style="margin-bottom: 1rem;" inset>
+            <van-cell v-if="panel_qrcode_valid" center title="显示二维码">
+                <template #right-icon>
+                    <van-switch
+                        v-model="panel_qrcode"
+                        :loading="panel_loading"
+                        @click="handlePanel(PanelAction.QRCode, panel_qrcode)"
+                    />
+                </template>
+            </van-cell>
             <van-cell
                 title="用户凭据"
                 is-link
@@ -132,6 +141,9 @@ const panel_kana = ref<boolean>(false)
 const panel_translated = ref<boolean>(false)
 const panel_roma = ref<boolean>(false)
 const panel_offset = ref<number>(0)
+
+const panel_qrcode_valid = ref<boolean>(false)
+const panel_qrcode = ref<boolean>(false)
 
 const panel_loading = ref<boolean>(false)
 const volume_uploading = ref<boolean>(false)
@@ -184,6 +196,9 @@ const refreshPanel = (panel : any) => {
     panel_roma.value = panel[PanelAction.Roma] ?? false
 
     panel_offset.value = panel[PanelAction.Offset] ?? 0
+
+    panel_qrcode_valid.value = panel[PanelAction.QRCode] != undefined
+    if (panel_qrcode_valid.value) panel_qrcode.value = panel[PanelAction.QRCode] ?? false
 }
 
 //提交面板操作

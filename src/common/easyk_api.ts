@@ -31,7 +31,9 @@ enum PanelAction {
     Translated = 'translated',
     Roma = 'roma',
 
-    Offset = 'offset'
+    Offset = 'offset',
+
+    QRCode = 'qrcode'
 }
 
 const queryCurrent = () => {
