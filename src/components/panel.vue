@@ -58,7 +58,14 @@ import { ref } from "vue"
             </van-cell>
         </van-cell-group>
         <van-cell-group class="panel-nickname-box" inset>
-            <van-cell center title="显示假名">
+            <van-cell
+                title="歌词选项"
+                center
+                is-link
+                :arrow-direction="panel_lyrics_shown ? 'down' : 'left'"
+                @click="panel_lyrics_shown = !panel_lyrics_shown"
+            />
+            <van-cell v-if="panel_lyrics_shown" title="显示假名" center>
                 <template #right-icon>
                     <van-switch
                         v-model="panel_kana"
@@ -67,7 +74,7 @@ import { ref } from "vue"
                     />
                 </template>
             </van-cell>
-            <van-cell center title="显示翻译">
+            <van-cell v-if="panel_lyrics_shown" title="显示翻译" center>
                 <template #right-icon>
                     <van-switch
                         v-model="panel_translated"
@@ -76,7 +83,7 @@ import { ref } from "vue"
                     />
                 </template>
             </van-cell>
-            <van-cell center title="显示罗马音">
+            <van-cell v-if="panel_lyrics_shown" title="显示罗马音" center>
                 <template #right-icon>
                     <van-switch
                         v-model="panel_roma"
@@ -136,6 +143,8 @@ const panel_volume = ref<number>(0)
 
 const panel_accompaniment_valid = ref<boolean>(false)
 const panel_accompaniment = ref<boolean>(false)
+
+const panel_lyrics_shown = ref<boolean>(false)
 
 const panel_kana = ref<boolean>(false)
 const panel_translated = ref<boolean>(false)
