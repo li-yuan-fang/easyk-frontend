@@ -111,7 +111,7 @@ import { ref } from "vue"
 import OffsetDialog from './offset-dialog.vue';
 import { showToast } from 'vant'
 import { ref } from 'vue'
-import { getPanel, PanelAction, pause, push, updatePanel } from '../common/easyk_api'
+import { getPanel, PanelAction, pause, push, setVolume, updatePanel } from '../common/easyk_api'
 
 //偏移对话框
 const offset = ref()
@@ -134,6 +134,7 @@ const panel_roma = ref<boolean>(false)
 const panel_offset = ref<number>(0)
 
 const panel_loading = ref<boolean>(false)
+const volume_uploading = ref<boolean>(false)
 
 //面板按键 - 暂停
 const handlePause = () => {
@@ -186,11 +187,10 @@ const refreshPanel = (panel : any) => {
 }
 
 //提交面板操作
-const handlePanel = (id : PanelAction, value : any, refresh : boolean = true) => {
+const handlePanel = (id : PanelAction, value : any) => {
     panel_loading.value = true
-    updatePanel(id, value).then((panel) => {
-        if (refresh) refreshPanel(panel)
-    }).catch((reason) => console.log(`获取当前插件状态失败 - ${reason}`))
+    updatePanel(id, value).then(refreshPanel)
+    .catch((reason) => console.log(`获取当前插件状态失败 - ${reason}`))
     .finally(() => panel_loading.value = false)
 }
 
@@ -202,19 +202,26 @@ const reloadPanel = () => {
     .finally(() => panel_loading.value = false)
 }
 
+const commitVolume = (value : number, refresh : boolean = false) => {
+    volume_uploading.value = true
+    setVolume(value).then((v) => {
+        if (refresh) panel_volume.value = v
+    }).finally(() => volume_uploading.value = false)
+}
+
 //提交音量更新
 const handleVolume = () => {
-    if (panel_loading.value) return
+    if (volume_uploading.value) return
 
-    handlePanel(PanelAction.Volume, panel_volume.value / 100, false)
+    commitVolume(panel_volume.value / 100)
 }
 
 //提交最终音量更新
 const handleVolumeComplete = () => {
-    if (panel_loading.value) {
+    if (panel_loading.value || volume_uploading.value) {
         //循环检测并保证提交
         let interval = setInterval(() => {
-            if (!panel_loading.value) {
+            if (!panel_loading.value && !volume_uploading.value) {
                 clearInterval(interval)
                 handlePanel(PanelAction.Volume, panel_volume.value / 100)
             }

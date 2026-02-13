@@ -19,7 +19,8 @@ export {
     upload_block,
     getPanel,
     updatePanel,
-    PanelAction
+    PanelAction,
+    setVolume,
 }
 
 enum PanelAction {
@@ -201,6 +202,17 @@ const updatePanel = (id : PanelAction, value : any) => {
         }, {
             timeout: 5000
         }).then((resp) => resolve(resp.data))
+        .catch(() => reject('无法连接到服务器'))
+    })
+}
+
+const setVolume = (value : number) => {
+    return new Promise<number>((resolve, reject) => {
+        axios.post(`${host}/volume`, {
+            value
+        }, {
+            timeout: 5000
+        }).then((resp) => resolve(resp.data.value))
         .catch(() => reject('无法连接到服务器'))
     })
 }
