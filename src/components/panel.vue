@@ -65,33 +65,44 @@ import { ref } from "vue"
                 :arrow-direction="panel_lyrics_shown ? 'down' : 'right'"
                 @click="panel_lyrics_shown = !panel_lyrics_shown"
             />
-            <van-cell v-if="panel_lyrics_shown" title="显示假名" center>
-                <template #right-icon>
-                    <van-switch
-                        v-model="panel_kana"
-                        :loading="panel_loading"
-                        @click="handlePanel(PanelAction.Kana, panel_kana)"
-                    />
-                </template>
-            </van-cell>
-            <van-cell v-if="panel_lyrics_shown" title="显示翻译" center>
-                <template #right-icon>
-                    <van-switch
-                        v-model="panel_translated"
-                        :loading="panel_loading"
-                        @click="handlePanel(PanelAction.Translated, panel_translated)"
-                    />
-                </template>
-            </van-cell>
-            <van-cell v-if="panel_lyrics_shown" title="显示罗马音" center>
-                <template #right-icon>
-                    <van-switch
-                        v-model="panel_roma"
-                        :loading="panel_loading"
-                        @click="handlePanel(PanelAction.Roma, panel_roma)"
-                    />
-                </template>
-            </van-cell>
+            <TransitionGroup name="shrink" tag="div">
+                <van-cell v-if="panel_lyrics_shown" center>
+                    <template #title>
+                        <text class="panel-lyric-option-text">显示假名</text>
+                    </template>
+                    <template #right-icon>
+                        <van-switch
+                            v-model="panel_kana"
+                            :loading="panel_loading"
+                            @click="handlePanel(PanelAction.Kana, panel_kana)"
+                        />
+                    </template>
+                </van-cell>
+                <van-cell v-if="panel_lyrics_shown" center>
+                    <template #title>
+                        <text class="panel-lyric-option-text">显示翻译</text>
+                    </template>
+                    <template #right-icon>
+                        <van-switch
+                            v-model="panel_translated"
+                            :loading="panel_loading"
+                            @click="handlePanel(PanelAction.Translated, panel_translated)"
+                        />
+                    </template>
+                </van-cell>
+                <van-cell v-if="panel_lyrics_shown" center>
+                    <template #title>
+                        <text class="panel-lyric-option-text">显示罗马音</text>
+                    </template>
+                    <template #right-icon>
+                        <van-switch
+                            v-model="panel_roma"
+                            :loading="panel_loading"
+                            @click="handlePanel(PanelAction.Roma, panel_roma)"
+                        />
+                    </template>
+                </van-cell>
+            </TransitionGroup>
             <van-cell
                 title="歌词偏移"
                 is-link
@@ -322,6 +333,38 @@ defineExpose({ show, isShown })
 
 .panel-nickname-box {
     margin: 0.3rem 0.8rem;
+}
+
+.panel-lyric-option-text {
+    margin-left: 1.2rem;
+}
+
+/* 进入动画：从上方滑入 */
+.shrink-enter-from {
+  opacity: 0;
+  transform: translateY(-20px);
+  max-height: 0;
+}
+
+.shrink-enter-active {
+  transition: all 0.2s ease-out;
+  max-height: 4rem; /* 需要大于元素实际高度 */
+  opacity: 1;
+}
+
+/* 离开动画：向上收缩 */
+.shrink-leave-active {
+  max-height: 4rem; /* 需要大于元素实际高度 */
+  transition: all 0.3s ease-out;
+  opacity: 1;
+}
+
+.shrink-leave-to {
+  opacity: 0;
+  transform: translateY(-20px); /* 可选：向上移动一点 */
+  max-height: 0;
+  padding: 0;
+  margin: 0;
 }
 
 </style>
