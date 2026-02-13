@@ -111,7 +111,7 @@ import { ref } from "vue"
 import OffsetDialog from './offset-dialog.vue';
 import { showToast } from 'vant'
 import { ref } from 'vue'
-import { getPanel, PanelAction, pause, push, updatePanel, updateVolume, VolumeAction } from '../common/easyk_api'
+import { getPanel, PanelAction, pause, push, updatePanel } from '../common/easyk_api'
 
 //偏移对话框
 const offset = ref()

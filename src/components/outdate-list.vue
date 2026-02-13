@@ -66,13 +66,13 @@ const handleoutdateReorder = (index : number) => {
             closeOnClick: true
         })
         reload()
-    }).catch(() => {
+    }).catch((reason) => {
         emit('loading', false)
         showToast({
             icon: 'close',
             type: 'fail',
             zIndex: '3002',
-            message: '点歌失败',
+            message: `点歌失败\n${reason}`,
             closeOnClick: true
         })
     })
