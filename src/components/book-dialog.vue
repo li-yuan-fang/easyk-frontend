@@ -163,7 +163,8 @@ const handlePasteBV = async () => {
             type: 'fail',
             zIndex: '3002',
             message: '获取剪贴板失败',
-            closeOnClick: true
+            closeOnClick: true,
+            closeOnClickOverlay: true
         })
     }
 }
@@ -188,7 +189,8 @@ const handleBook = () => {
             type: 'fail',
             zIndex: '3002',
             message: '歌名不能为空',
-            closeOnClick: true
+            closeOnClick: true,
+            closeOnClickOverlay: true
         })
 
         return
@@ -206,7 +208,8 @@ const handleBook = () => {
                     type: 'success',
                     zIndex: '3002',
                     message: '点歌成功',
-                    closeOnClick: true
+                    closeOnClick: true,
+                    closeOnClickOverlay: true
                 })
 
                 emit('refresh')
@@ -217,7 +220,8 @@ const handleBook = () => {
                 type: 'fail',
                 zIndex: '3002',
                 message: '点歌失败',
-                closeOnClick: true
+                closeOnClick: true,
+                closeOnClickOverlay: true
             })
         }).finally(() => {
             resetDialog()
@@ -234,7 +238,8 @@ const handleBook = () => {
                         type: 'fail',
                         zIndex: '3002',
                         message: '请选择要上传的文件',
-                        closeOnClick: true
+                        closeOnClick: true,
+                        closeOnClickOverlay: true
                     })
 
                     emit('loading', false)
@@ -262,7 +267,8 @@ const handleBook = () => {
                         type: 'fail',
                         zIndex: '3002',
                         message: reason,
-                        closeOnClick: true
+                        closeOnClick: true,
+                        closeOnClickOverlay: true
                     })
                     console.log(reason)
 

@@ -171,13 +171,14 @@ const volume_uploading = ref<boolean>(false)
 //面板按键 - 暂停
 const handlePause = () => {
     loading_action.value = true
-    pause().then(() => {}).catch(() => {
+    pause().then(() => reloadPanel()).catch(() => {
         showToast({
-        icon: 'close',
-        type: 'fail',
-        zIndex: '3002',
-        message: '暂停失败',
-        closeOnClick: true
+            icon: 'close',
+            type: 'fail',
+            zIndex: '3002',
+            message: '暂停失败',
+            closeOnClick: true,
+            closeOnClickOverlay: true
         })
     }).finally(() => loading_action.value = false)
 }
@@ -187,19 +188,23 @@ const handlePush = () => {
     loading_action.value = true
     push().then(() => {
         showToast({
-        icon: 'passed',
-        type: 'success',
-        zIndex: '3002',
-        message: '切歌成功',
-        closeOnClick: true
+            icon: 'passed',
+            type: 'success',
+            zIndex: '3002',
+            message: '切歌成功',
+            closeOnClick: true,
+            closeOnClickOverlay: true
         })
+
+        reloadPanel()
     }).catch(() => {
         showToast({
-        icon: 'close',
-        type: 'fail',
-        zIndex: '3002',
-        message: '切歌失败',
-        closeOnClick: true
+            icon: 'close',
+            type: 'fail',
+            zIndex: '3002',
+            message: '切歌失败',
+            closeOnClick: true,
+            closeOnClickOverlay: true
         })
     }).finally(() => loading_action.value = false)
 }

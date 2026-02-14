@@ -49,7 +49,8 @@ const handleConfirm = () => {
             type: 'fail',
             zIndex: '3002',
             message: '昵称不能为空',
-            closeOnClick: true
+            closeOnClick: true,
+            closeOnClickOverlay: true
         })
     } else {
         setCookie('name', encodeURI(nickname.value), 7)
@@ -69,7 +70,8 @@ const handlePastePassKey = async () => {
             type: 'fail',
             zIndex: '3002',
             message: '获取剪贴板失败',
-            closeOnClick: true
+            closeOnClick: true,
+            closeOnClickOverlay: true
         })
     }
 }

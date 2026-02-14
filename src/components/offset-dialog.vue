@@ -118,7 +118,8 @@ const handleConfirm = () => {
             type: 'fail',
             zIndex: '3002',
             message: '偏移修改失败',
-            closeOnClick: true
+            closeOnClick: true,
+            closeOnClickOverlay: true
         })
     })
 }

@@ -63,7 +63,8 @@ const handleoutdateReorder = (index : number) => {
             type: 'success',
             zIndex: '3002',
             message: '点歌成功',
-            closeOnClick: true
+            closeOnClick: true,
+            closeOnClickOverlay: true
         })
         reload()
     }).catch((reason) => {
@@ -73,7 +74,8 @@ const handleoutdateReorder = (index : number) => {
             type: 'fail',
             zIndex: '3002',
             message: `点歌失败\n${reason}`,
-            closeOnClick: true
+            closeOnClick: true,
+            closeOnClickOverlay: true
         })
     })
 }
@@ -88,7 +90,8 @@ const reload = () => {
         type: 'fail',
         zIndex: '3002',
         message: '加载已点列表失败',
-        closeOnClick: true
+        closeOnClick: true,
+        closeOnClickOverlay: true
     }))
     .finally(() => emit('loading', false))
 }

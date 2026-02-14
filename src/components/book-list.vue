@@ -76,7 +76,8 @@ const handleBookRemove = (index : number) => {
                 type: 'success',
                 zIndex: '3002',
                 message: '移除成功',
-                closeOnClick: true
+                closeOnClick: true,
+                closeOnClickOverlay: true
             })
             reload()
         }).catch((reason) => {
@@ -86,7 +87,8 @@ const handleBookRemove = (index : number) => {
                 type: 'fail',
                 zIndex: '3002',
                 message: `移除失败\n${reason}`,
-                closeOnClick: true
+                closeOnClick: true,
+                closeOnClickOverlay: true
             })
         })
     })
@@ -103,7 +105,8 @@ const handleBookTop = (index : number) => {
             type: 'success',
             zIndex: '3002',
             message: '顶歌成功',
-            closeOnClick: true
+            closeOnClick: true,
+            closeOnClickOverlay: true
         })
         reload()
     }).catch((reason) => {
@@ -113,7 +116,8 @@ const handleBookTop = (index : number) => {
             type: 'fail',
             zIndex: '3002',
             message: `顶歌失败\n${reason}`,
-            closeOnClick: true
+            closeOnClick: true,
+            closeOnClickOverlay: true
         })
     })
 }
@@ -127,7 +131,8 @@ const reload = () => {
         icon: 'close',
         type: 'fail',
         message: '加载已点列表失败',
-        closeOnClick: true
+        closeOnClick: true,
+        closeOnClickOverlay: true
     }))
     .finally(() => emit('loading', false))
 }
