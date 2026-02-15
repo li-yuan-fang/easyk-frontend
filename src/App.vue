@@ -163,7 +163,7 @@ onMounted(() => {
   bubble_offset.value.y = max_top - 24 - 48
 
   refresh_interval.value = setInterval(updateState, 10000)
-  nextTick(reloadCurrent)
+  setTimeout(reloadCurrent, 2000)
 })
 
 onBeforeUnmount(() => {
