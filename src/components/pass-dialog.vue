@@ -30,7 +30,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { nextTick, onMounted, ref } from 'vue';
 import { showToast } from 'vant';
 import { getCookie, setCookie } from '../common/cookies';
 
@@ -52,6 +52,8 @@ const handleConfirm = () => {
             closeOnClick: true,
             closeOnClickOverlay: true
         })
+
+        nextTick(() => emit('update:modelValue', true))
     } else {
         setCookie('name', encodeURI(nickname.value), 7)
         setCookie('key', passkey.value, 7)
