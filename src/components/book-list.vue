@@ -122,19 +122,25 @@ const handleBookTop = (index : number) => {
     })
 }
 
-const reload = () => {
-    emit('loading', true)
+const reload = (slient : boolean = false) => {
+    if (!slient) emit('loading', true)
     queryBookList().then((list) => {
         books.value = list
     })
-    .catch(() => showToast({
-        icon: 'close',
-        type: 'fail',
-        message: '加载已点列表失败',
-        closeOnClick: true,
-        closeOnClickOverlay: true
-    }))
-    .finally(() => emit('loading', false))
+    .catch(() => {
+        if (!slient) {
+            showToast({
+                icon: 'close',
+                type: 'fail',
+                message: '加载已点列表失败',
+                closeOnClick: true,
+                closeOnClickOverlay: true
+            })
+        }
+    })
+    .finally(() => {
+        if (!slient) emit('loading', false)
+    })
 }
 
 defineExpose({ reload })

@@ -78,7 +78,7 @@ import Tabbar from './components/tabbar.vue';
 import Panel from './components/panel.vue';
 import BookDialog from './components/book-dialog.vue';
 import PassDialog from './components/pass-dialog.vue';
-import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 import type { BookListItem } from './common/book_interfaces';
 
 //主界面相关
@@ -128,6 +128,11 @@ const handleBubbleMove = () => {
 //刷新当前播放
 const reloadCurrent = () => {
   queryCurrent().then((c) => {
+    //自动刷新已点列表
+    if (current.value?.id != c?.id && active_page.value == 0) {
+      book_list.value.reload(true)
+    }
+
     current.value = c
   }).catch((reason) => console.log(`获取当前播放信息失败 - ${reason}`))
 }
