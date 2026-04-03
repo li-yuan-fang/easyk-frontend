@@ -35,7 +35,7 @@
                             class="book-list-item-tool"
                             name="ascending"
                             size="1.6rem"
-                            @mousedown="(e) => handleRank(e, index)"
+                            @mousedown="(e : MouseEvent) => handleRank(e, index)"
                         />
                         <van-icon
                             class="book-list-item-tool"
