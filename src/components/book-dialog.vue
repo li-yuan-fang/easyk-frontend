@@ -32,17 +32,7 @@
                 clearable
                 label="BV号"
                 placeholder="请输入BV号"
-            >
-                <template #button>
-                    <van-button
-                        size="small"
-                        type="primary"
-                        @click="handlePasteBV"
-                    >
-                        粘贴
-                    </van-button>
-                </template>
-            </van-field>
+            />
             <van-uploader
                 class="book-dialog-upload"
                 v-if="video_type == 0"
@@ -151,22 +141,6 @@ const getTypeText = () => {
 const onSelected = (e : any) => {
     type_shown.value = false
     video_type.value = e['selectedOptions'][0].value
-}
-
-const handlePasteBV = async () => {
-    try {
-        const text = await navigator.clipboard.readText()
-        BV_code.value = text
-    } catch {
-        showToast({
-            icon: 'close',
-            type: 'fail',
-            zIndex: '3002',
-            message: '获取剪贴板失败',
-            closeOnClick: true,
-            closeOnClickOverlay: true
-        })
-    }
 }
 
 const handleVideoRead = (uploaded : any) => {

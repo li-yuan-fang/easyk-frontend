@@ -15,17 +15,7 @@
             label="授权码"
             placeholder="请输入授权码(选填)"
             type="password"
-        >
-            <template #button>
-                <van-button
-                    size="small"
-                    type="primary"
-                    @click="handlePastePassKey"
-                >
-                    粘贴
-                </van-button>
-            </template>
-        </van-field>
+        />
     </van-dialog>
 </template>
 
@@ -59,22 +49,6 @@ const handleConfirm = () => {
         setCookie('key', passkey.value, 7)
 
         emit('update:modelValue', false)
-    }
-}
-
-const handlePastePassKey = async () => {
-    try {
-        const text = await navigator.clipboard.readText()
-        passkey.value = text
-    } catch {
-        showToast({
-            icon: 'close',
-            type: 'fail',
-            zIndex: '3002',
-            message: '获取剪贴板失败',
-            closeOnClick: true,
-            closeOnClickOverlay: true
-        })
     }
 }
 
