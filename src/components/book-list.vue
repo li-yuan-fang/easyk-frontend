@@ -6,18 +6,19 @@
         class="book-refresh"
         :disabled="drag_rank"
     >
-        <div class="book-container" v-if="books && books.list?.length > 0">
+        <div v-if="books && books.list?.length > 0" class="book-container" >
             <van-cell-group
                 v-for="(item, index) in books.list"
                 :key="index"
                 style="margin-bottom: 0.5rem;"
-                :class="(drag_current == index) ? 'book-drag-shadow' : ''"
+                :class="(drag_rank && drag_current == index) ? 'book-drag-shadow book-list-item' : 'book-list-item'"
                 inset
 
                 :draggable="drag_rank"
                 @dragenter.prevent="updateRankPos(index)"
                 @dragover.prevent
                 @dragend.prevent="confirmRank"
+                @touchend="confirmRank"
             >
                 <van-cell
                     :title="item.title"
@@ -36,6 +37,8 @@
                             name="ascending"
                             size="1.6rem"
                             @mousedown="(e : MouseEvent) => handleRank(e, index)"
+                            @touchstart="handleRank(undefined, index)"
+                            :color="(drag_rank && drag_current == index) ? 'var(--van-button-primary-background)' : 'inherit'"
                         />
                         <van-icon
                             class="book-list-item-tool"
@@ -56,7 +59,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { nextTick, onMounted, onUnmounted, ref } from 'vue';
 import { showConfirmDialog, showToast } from 'vant';
 import type { BookList, BookListItem } from '../common/book_interfaces';
 import { queryBookList, removeBook, rankBook } from '../common/easyk_api';
@@ -71,6 +74,7 @@ const manual_loading = ref<boolean>(false)
 const drag_rank = ref<boolean>(false)
 const drag_start = ref<number>(-1)
 const drag_current = ref<number>(-1)
+const drag_event = ref<MouseEvent | undefined>(undefined)
 
 const emit = defineEmits(['loading'])
 
@@ -150,13 +154,13 @@ const handleBookRank = (index : number, rank : boolean = false) => {
 }
 
 //开始拖拽
-const handleRank = (e : MouseEvent, index : number) => {
+const handleRank = (e : MouseEvent | undefined, index : number) => {
     drag_rank.value = true
     drag_current.value = index
     drag_start.value = index
 
-    //先触发mouseup 避免影响上拉刷新组件
-    document.dispatchEvent(new MouseEvent('mouseup', e))
+    //先触发结束事件 避免影响上拉刷新组件
+    if (e && e.type == 'mousedown') drag_event.value = e
 }
 
 //拖拽更新选中歌曲位置
@@ -167,19 +171,45 @@ const updateRankPos = (index : number) => {
     books.value.list = [...books.value.list.slice(0, index), item, ...books.value.list.slice(index)]
 
     drag_current.value = index
+}
 
-    console.log(index)
+//检测touchmove适配移动端
+const handleTouchMove = (e : TouchEvent) => {
+    if (!drag_rank.value || !e.changedTouches || e.changedTouches.length == 0) return
+
+    let targetY = -1
+    for (let i = 0; i < e.changedTouches.length; i++) {
+        if (e.changedTouches[i]) {
+            targetY = e.changedTouches[i]?.clientY || -1
+            break
+        }
+    }
+
+    let elements = document.getElementsByClassName('book-list-item')
+    for (let i = 0; i < elements.length; i++) {
+        let bound = (<HTMLElement> (<any> elements[i])).getBoundingClientRect()
+        if (targetY >= bound.y && targetY <= bound.y + bound.height) {
+            updateRankPos(i)
+            break
+        }
+    }
 }
 
 //提交排序更新
 const confirmRank = () => {
     //提交更新
-    if (drag_current.value != drag_start.value)
+    if (drag_rank.value && drag_current.value >= 0 && drag_current.value != drag_start.value)
         handleBookRank(drag_current.value, true)
 
-    drag_rank.value = false
     drag_current.value = -1
     drag_start.value = -1
+
+    if (drag_event.value) {
+        document.dispatchEvent(new MouseEvent('mouseup', drag_event.value))
+        drag_event.value = undefined
+    }
+
+    nextTick(() => drag_rank.value = false)
 }
 
 //重新加载列表
@@ -209,7 +239,12 @@ const reload = (slient : boolean = false) => {
 defineExpose({ reload })
 
 onMounted(() => {
+    document.addEventListener('touchmove', handleTouchMove)
     reload()
+})
+
+onUnmounted(() => {
+    document.removeEventListener('touchmove', handleTouchMove)
 })
 
 </script>
@@ -256,6 +291,12 @@ onMounted(() => {
 
 .book-drag-shadow {
     border: 0.15rem solid var(--van-button-primary-background);
+}
+
+[draggable="true"] {
+  -webkit-user-drag: element;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 </style>
