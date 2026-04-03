@@ -9,7 +9,7 @@ export {
     queryBookList,
     book,
     removeBook,
-    topBook,
+    rankBook,
     queryOutdatedList,
     reorderBook,
     push,
@@ -67,10 +67,11 @@ const book = (title : string, type : number, content : string) => {
     })
 }
 
-const topBook = (id : string) => {
+const rankBook = (id : string, rank : number = 0) => {
     return new Promise<void>((resolve, reject) => {
-        axios.post(`${host}/top`, {
-            id
+        axios.post(`${host}/rank`, {
+            id,
+            rank
         }, {
             timeout: 5000
         }).then(() => resolve())

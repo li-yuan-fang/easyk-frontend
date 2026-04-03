@@ -29,7 +29,7 @@
       ref="tab"
       @book="book_dialog_shown = true"
     />
-    <div class="virtual-tabbar-box" :style="`height: ${max_content_height};`" />
+    <div class="virtual-tabbar-box" :style="{ height: max_content_height }" />
 
     <!-- 控制面板悬浮气泡 -->
     <van-floating-bubble
