@@ -23,6 +23,7 @@ interface UploadQuiry {
 interface UploadSession {
     id: string;
     chunk?: number;
+    bypass?: boolean;
 }
 
 const base64_prefix = 'base64,'
@@ -41,11 +42,12 @@ const getBase64Bytes = (content : string) : Uint8Array => {
 }
 
 const uploadVideo = (content : string, callback : (progress : number) => (void)) => {
-    return new Promise<string>((resolve, reject) => {
+    return new Promise<string>(async (resolve, reject) => {
         let data = getBase64Bytes(content)
         let content_id : string | undefined
 
         let chunk_size : number = default_chunk_size
+        let hash : string | undefined
 
         const process_upload = () => {
             let lock_queue = new Mutex()
@@ -55,9 +57,6 @@ const uploadVideo = (content : string, callback : (progress : number) => (void))
 
             let working : number = 0
             let lock_working = new Mutex()
-
-            let hash : string | undefined
-            let lock_hash = new Mutex()
 
             let exit_flag = false
 
@@ -203,9 +202,7 @@ const uploadVideo = (content : string, callback : (progress : number) => (void))
                             release()
 
                             //全部请求完成 开始查询上传结果
-                            lock_hash.acquire().then((release) => {
-                                quiry(3, <string> hash)
-                            })
+                            quiry(3, <string> hash)
                         })
                     })
                 })
@@ -223,14 +220,19 @@ const uploadVideo = (content : string, callback : (progress : number) => (void))
             }
 
             dispatchQueue()
-            lock_hash.acquire().then((release) => {
-                hash = sha256(data)
-                release()
-            })
         }
+        
+        hash = sha256(data)
 
-        upload_apply(data.length)
+        upload_apply(data.length, hash)
         .then((resp) => {
+            if (resp.bypass) {
+                //跳过
+                callback(1)
+                resolve(resp.id)
+                return
+            }
+
             content_id = resp.id
             if (resp.chunk) chunk_size = resp.chunk
 

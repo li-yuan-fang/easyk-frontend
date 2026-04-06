@@ -155,10 +155,11 @@ const upload_quiry = () => {
     })
 }
 
-const upload_apply = (size : number) => {
+const upload_apply = (size : number, hash : string) => {
     return new Promise<UploadSession>((resolve, reject) => {
         axios.post(`${host}/upload`, {
-            size
+            size,
+            hash
         }, {
             timeout: 5000
         }).then((resp) => {
