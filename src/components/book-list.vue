@@ -5,6 +5,7 @@
         success-text="刷新成功"
         class="book-refresh"
         :disabled="drag_rank"
+        @click="confirmRank"
     >
         <div v-if="books && books.list?.length > 0" class="book-container" >
             <van-cell-group
