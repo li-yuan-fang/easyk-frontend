@@ -13,6 +13,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     BookDialog: typeof import('./src/components/book-dialog.vue')['default']
     BookList: typeof import('./src/components/book-list.vue')['default']
+    NumberDialog: typeof import('./src/components/number-dialog.vue')['default']
     OffsetDialog: typeof import('./src/components/offset-dialog.vue')['default']
     OutdateList: typeof import('./src/components/outdate-list.vue')['default']
     Panel: typeof import('./src/components/panel.vue')['default']

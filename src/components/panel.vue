@@ -120,9 +120,14 @@ import { ref } from "vue"
                 </van-cell>
             </TransitionGroup>
             <van-cell
-                title="歌词偏移"
+                title="歌词延迟"
                 is-link
-                @click="offset.show()"
+                @click="handleNumDialog(PanelAction.Offset)"
+            />
+            <van-cell
+                title="歌词对比度"
+                is-link
+                @click="handleNumDialog(PanelAction.Contrast)"
             />
         </van-cell-group>
         <van-cell-group class="panel-nickname-box" style="margin-bottom: 1rem;" inset>
@@ -143,21 +148,22 @@ import { ref } from "vue"
         </van-cell-group>
     </van-popup>
 
-    <offset-dialog
-        ref="offset"
-        :value="panel_offset"
+    <number-dialog
+        ref="num_dialog"
+        :value="num_value"
         @refresh="refreshPanel"
     />
 </template>
 
 <script setup lang="ts">
-import OffsetDialog from './offset-dialog.vue';
+import NumberDialog from './number-dialog.vue';
 import { showToast } from 'vant'
-import { ref } from 'vue'
+import { nextTick, ref } from 'vue'
 import { getPanel, PanelAction, pause, push, setVolume, updatePanel } from '../common/easyk_api'
 
-//偏移对话框
-const offset = ref()
+//数值对话框
+const num_dialog = ref()
+const num_value = ref<number>(0)
 
 //控制面板
 const panel_shown = ref<boolean>(false)
@@ -178,10 +184,11 @@ const panel_intersect = ref<boolean>(false)
 const panel_kana = ref<boolean>(false)
 const panel_translated = ref<boolean>(false)
 const panel_roma = ref<boolean>(false)
-const panel_offset = ref<number>(0)
 
 const panel_qrcode_valid = ref<boolean>(false)
 const panel_qrcode = ref<boolean>(false)
+
+const panel_number : any = {}
 
 const panel_loading = ref<boolean>(false)
 const volume_uploading = ref<boolean>(false)
@@ -239,7 +246,9 @@ const refreshPanel = (panel : any) => {
     panel_kana.value = panel[PanelAction.Kana] ?? false
     panel_translated.value = panel[PanelAction.Translated] ?? false
     panel_roma.value = panel[PanelAction.Roma] ?? false
-    panel_offset.value = panel[PanelAction.Offset] ?? 0
+
+    panel_number[PanelAction.Offset] = panel[PanelAction.Offset] ?? 0
+    panel_number[PanelAction.Contrast] = panel[PanelAction.Contrast] ?? 0.15
 
     panel_qrcode_valid.value = panel[PanelAction.QRCode] != undefined
     if (panel_qrcode_valid.value) panel_qrcode.value = panel[PanelAction.QRCode] ?? false
@@ -289,6 +298,12 @@ const handleVolumeComplete = () => {
     }
 
     handlePanel(PanelAction.Volume, panel_volume.value / 100)
+}
+
+//打开数值对话框
+const handleNumDialog = (action : PanelAction) => {
+    num_value.value = panel_number[action]
+    nextTick(() => num_dialog.value.show(action))
 }
 
 //显示面板

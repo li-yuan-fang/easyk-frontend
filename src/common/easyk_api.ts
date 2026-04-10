@@ -34,7 +34,10 @@ enum PanelAction {
     Kana = 'kana',
     Translated = 'translated',
     Roma = 'roma',
+
+    //歌词面板(数值部分)
     Offset = 'offset',
+    Contrast = 'contrast',
 
     //二维码显示
     QRCode = 'qrcode'

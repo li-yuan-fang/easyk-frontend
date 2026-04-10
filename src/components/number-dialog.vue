@@ -1,6 +1,6 @@
 <template>
     <van-dialog
-        title="歌词偏移"
+        :title="getTitle()"
         v-model:show="shown"
         show-cancel-button
         @cancel="handleCancel"
@@ -10,10 +10,10 @@
             <van-field
                 v-if="offset_edit"
                 class="offset-input"
-                v-model="offset"
+                v-model="value"
                 type="number"
-                placeholder="请输入歌词偏移"
-                @change="offset = Math.max(-range, Math.min(offset, range))"
+                :placeholder="`请输入${getTitle()}`"
+                @change="offset = Math.max(slide_min, Math.min(ValueToOffset(value), slide_max))"
             >
                 <template #button>
                     <van-button size="small" type="primary" @click="handleField">确定</van-button>
@@ -23,7 +23,7 @@
                 v-else
                 class="offset-text"
                 style="cursor: pointer;"
-                @click="offset_edit = true"
+                @click="handleOpenField"
             >
                 {{ getText() }}
             </text>
@@ -31,9 +31,9 @@
         <van-slider
             class="offset-slider offset-line"
             v-model="offset"
-            step="0.1"
-            :min="-range"
-            :max="range"
+            :step="slide_step"
+            :min="slide_min"
+            :max="slide_max"
             active-color="var(--van-slider-inactive-background)"
             @drag-start="offset_edit = false"
             @change="handlePreview"
@@ -55,37 +55,103 @@ import { showToast } from 'vant';
 import { PanelAction, updatePanel } from '../common/easyk_api';
 
 //调节范围
-const range = 1000
+const slide_min = ref<number>(-1000)
+const slide_max = ref<number>(1000)
+const slide_step = ref<number>(0.1)
 
 const props = defineProps(['value'])
 const emit = defineEmits(['refresh'])
 
+const mode = ref<PanelAction>(PanelAction.Offset)
+
 const shown = ref<boolean>(false)
+const value = ref<number>(0)
 const offset = ref<number>(0)
 const preview = ref<boolean>(true)
 
 const offset_edit = ref<boolean>(false)
 
-//获取字符
+//获取标题
+const getTitle = () : string => {
+    switch (mode.value) {
+        case PanelAction.Offset:
+            return '歌词偏移'
+        case PanelAction.Contrast:
+            return '歌词对比度'
+        default:
+            return '未知参数'
+    }
+}
+
+//获取内容
 const getText = () : string => {
-    if (offset.value > 0) {
-        return `提前 ${Math.abs(offset.value)} ms`
-    } else if (offset.value < 0) {
-        return `延迟 ${Math.abs(offset.value)} ms`
-    } else {
-        return '无偏移'
+    switch (mode.value) {
+        case PanelAction.Offset:
+            {
+                if (offset.value > 0) {
+                    return `提前 ${Math.abs(offset.value)} ms`
+                } else if (offset.value < 0) {
+                    return `延迟 ${Math.abs(offset.value)} ms`
+                } else {
+                    return '无偏移'
+                }
+            }
+        case PanelAction.Contrast:
+            return `${offset.value}%`
+        default:
+            return ''
+    }
+}
+
+//换算
+const OffsetToValue = (o : number) : number => {
+    switch (mode.value) {
+        case PanelAction.Contrast:
+            return o / 100
+        default:
+            return o
+    }
+}
+
+const ValueToOffset = (v : number) : number => {
+    switch (mode.value) {
+        case PanelAction.Contrast:
+            return v * 100
+        default:
+            return v
+    }
+}
+
+const updateRange = () => {
+    switch (mode.value) {
+        case PanelAction.Offset:
+            slide_min.value = -1000
+            slide_max.value = 1000
+            break
+        case PanelAction.Contrast:
+            slide_min.value = 0
+            slide_max.value = 100
+            break
     }
 }
 
 //显示
-const show = () => {
-    offset.value = props.value
+const show = (m : PanelAction) => {
+    mode.value = m
+    updateRange()
+
+    offset.value = ValueToOffset(props.value)
     shown.value = true
 }
 
 //提交更改
 const commit = (value : number) => {
-    return updatePanel(PanelAction.Offset, value)
+    return updatePanel(mode.value, value)
+}
+
+const handleOpenField = () => {
+    value.value = OffsetToValue(offset.value)
+    offset_edit.value = true
 }
 
 const handleField = () => {
@@ -96,12 +162,12 @@ const handleField = () => {
 const handlePreview = () => {
     offset_edit.value = false
 
-    if (preview.value) commit(offset.value)
+    if (preview.value) commit(OffsetToValue(offset.value))
 }
 
 //取消更改
 const handleCancel = () => {
-    if (offset.value != props.value) commit(props.value)
+    if (OffsetToValue(offset.value) != props.value) commit(props.value)
     offset_edit.value = false
     shown.value = false
 }
@@ -109,7 +175,7 @@ const handleCancel = () => {
 //确认保存
 const handleConfirm = () => {
     offset_edit.value = false
-    commit(offset.value).then((resp) => {
+    commit(OffsetToValue(offset.value)).then((resp) => {
         shown.value = false
         emit('refresh', resp)
     }).catch(() => {
@@ -117,7 +183,7 @@ const handleConfirm = () => {
             icon: 'close',
             type: 'fail',
             zIndex: '3002',
-            message: '偏移修改失败',
+            message: `${getTitle()}修改失败`,
             closeOnClick: true,
             closeOnClickOverlay: true
         })
