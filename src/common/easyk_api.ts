@@ -24,15 +24,19 @@ export {
 }
 
 enum PanelAction {
+    //基础控制
     Volume = 'volume',
     Accompaniment = 'accompaniment',
 
+    //歌词面板
+    LyricShow = 'lyric_show',
+    Intersect = 'intersect',
     Kana = 'kana',
     Translated = 'translated',
     Roma = 'roma',
-
     Offset = 'offset',
 
+    //二维码显示
     QRCode = 'qrcode'
 }
 

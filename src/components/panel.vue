@@ -57,16 +57,32 @@ import { ref } from "vue"
                 </template>
             </van-cell>
         </van-cell-group>
-        <van-cell-group class="panel-nickname-box" inset>
+        <van-cell-group
+            v-if="panel_lyric_show"
+            class="panel-nickname-box"
+            inset
+        >
             <van-cell
                 title="歌词选项"
                 center
                 is-link
-                :arrow-direction="panel_lyrics_shown ? 'down' : 'right'"
-                @click="panel_lyrics_shown = !panel_lyrics_shown"
+                :arrow-direction="panel_lyrics_unfold ? 'down' : 'right'"
+                @click="panel_lyrics_unfold = !panel_lyrics_unfold"
             />
             <TransitionGroup name="shrink" tag="div">
-                <van-cell v-if="panel_lyrics_shown" center>
+                <van-cell v-if="panel_lyrics_unfold" center>
+                    <template #title>
+                        <text class="panel-lyric-option-text">双层歌词</text>
+                    </template>
+                    <template #right-icon>
+                        <van-switch
+                            v-model="panel_intersect"
+                            :loading="panel_loading"
+                            @click="handlePanel(PanelAction.Intersect, panel_intersect)"
+                        />
+                    </template>
+                </van-cell>
+                <van-cell v-if="panel_lyrics_unfold" center>
                     <template #title>
                         <text class="panel-lyric-option-text">显示假名</text>
                     </template>
@@ -78,7 +94,7 @@ import { ref } from "vue"
                         />
                     </template>
                 </van-cell>
-                <van-cell v-if="panel_lyrics_shown" center>
+                <van-cell v-if="panel_lyrics_unfold" center>
                     <template #title>
                         <text class="panel-lyric-option-text">显示翻译</text>
                     </template>
@@ -90,7 +106,7 @@ import { ref } from "vue"
                         />
                     </template>
                 </van-cell>
-                <van-cell v-if="panel_lyrics_shown" center>
+                <van-cell v-if="panel_lyrics_unfold" center>
                     <template #title>
                         <text class="panel-lyric-option-text">显示罗马音</text>
                     </template>
@@ -155,8 +171,10 @@ const panel_volume = ref<number>(0)
 const panel_accompaniment_valid = ref<boolean>(false)
 const panel_accompaniment = ref<boolean>(false)
 
-const panel_lyrics_shown = ref<boolean>(false)
+const panel_lyrics_unfold = ref<boolean>(false)
 
+const panel_lyric_show = ref<boolean>(false)
+const panel_intersect = ref<boolean>(false)
 const panel_kana = ref<boolean>(false)
 const panel_translated = ref<boolean>(false)
 const panel_roma = ref<boolean>(false)
@@ -216,10 +234,11 @@ const refreshPanel = (panel : any) => {
     panel_accompaniment_valid.value = panel[PanelAction.Accompaniment] != undefined
     if (panel_accompaniment_valid.value) panel_accompaniment.value = panel[PanelAction.Accompaniment] ?? false
 
+    panel_lyric_show.value = panel[PanelAction.LyricShow] ?? false
+    panel_intersect.value = panel[PanelAction.Intersect] ?? false
     panel_kana.value = panel[PanelAction.Kana] ?? false
     panel_translated.value = panel[PanelAction.Translated] ?? false
     panel_roma.value = panel[PanelAction.Roma] ?? false
-
     panel_offset.value = panel[PanelAction.Offset] ?? 0
 
     panel_qrcode_valid.value = panel[PanelAction.QRCode] != undefined
