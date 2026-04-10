@@ -127,10 +127,12 @@ const updateRange = () => {
         case PanelAction.Offset:
             slide_min.value = -1000
             slide_max.value = 1000
+            slide_step.value = 0.1
             break
         case PanelAction.Contrast:
             slide_min.value = 0
-            slide_max.value = 100
+            slide_max.value = 50
+            slide_step.value = 0.5
             break
     }
 }
