@@ -57,11 +57,7 @@ import { ref } from "vue"
                 </template>
             </van-cell>
         </van-cell-group>
-        <van-cell-group
-            v-if="panel_lyric_show"
-            class="panel-nickname-box"
-            inset
-        >
+        <van-cell-group class="panel-nickname-box" inset>
             <van-cell
                 title="歌词选项"
                 center
@@ -118,17 +114,29 @@ import { ref } from "vue"
                         />
                     </template>
                 </van-cell>
+                <van-cell
+                    v-if="panel_lyrics_unfold"
+                    center
+                    is-link
+                    @click="handleNumDialog(PanelAction.Offset)"
+                >
+                
+                    <template #title>
+                        <text class="panel-lyric-option-text">歌词延迟</text>
+                    </template>
+                </van-cell>
+                <van-cell
+                    v-if="panel_lyrics_unfold"
+                    center
+                    is-link
+                    @click="handleNumDialog(PanelAction.Contrast)"
+                >
+                
+                    <template #title>
+                        <text class="panel-lyric-option-text">歌词对比度</text>
+                    </template>
+                </van-cell>
             </TransitionGroup>
-            <van-cell
-                title="歌词延迟"
-                is-link
-                @click="handleNumDialog(PanelAction.Offset)"
-            />
-            <van-cell
-                title="歌词对比度"
-                is-link
-                @click="handleNumDialog(PanelAction.Contrast)"
-            />
         </van-cell-group>
         <van-cell-group class="panel-nickname-box" style="margin-bottom: 1rem;" inset>
             <van-cell v-if="panel_qrcode_valid" center title="显示二维码">
@@ -179,7 +187,6 @@ const panel_accompaniment = ref<boolean>(false)
 
 const panel_lyrics_unfold = ref<boolean>(false)
 
-const panel_lyric_show = ref<boolean>(false)
 const panel_intersect = ref<boolean>(false)
 const panel_kana = ref<boolean>(false)
 const panel_translated = ref<boolean>(false)
@@ -241,7 +248,6 @@ const refreshPanel = (panel : any) => {
     panel_accompaniment_valid.value = panel[PanelAction.Accompaniment] != undefined
     if (panel_accompaniment_valid.value) panel_accompaniment.value = panel[PanelAction.Accompaniment] ?? false
 
-    panel_lyric_show.value = panel[PanelAction.LyricShow] ?? false
     panel_intersect.value = panel[PanelAction.Intersect] ?? false
     panel_kana.value = panel[PanelAction.Kana] ?? false
     panel_translated.value = panel[PanelAction.Translated] ?? false

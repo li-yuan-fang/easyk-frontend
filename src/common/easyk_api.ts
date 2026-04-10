@@ -29,7 +29,6 @@ enum PanelAction {
     Accompaniment = 'accompaniment',
 
     //歌词面板
-    LyricShow = 'lyric_show',
     Intersect = 'intersect',
     Kana = 'kana',
     Translated = 'translated',
