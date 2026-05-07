@@ -2,6 +2,8 @@
     <van-dialog
         v-model:show="props.modelValue"
         @confirm="handleConfirm"
+        :close-on-popstate="false"
+        :confirm-button-disabled="checkNickname()"
     >
         <van-field
             class="pass-nickname"
@@ -32,8 +34,10 @@ const emit = defineEmits(['update:modelValue'])
 const nickname = ref<string>('')
 const passkey = ref<string>('')
 
+const checkNickname = () : boolean => nickname.value.length == 0 || (nickname.value.match(empty_regex) != null)
+
 const handleConfirm = () => {
-    if (nickname.value.length == 0 || nickname.value.match(empty_regex)) {
+    if (checkNickname()) {
         showToast({
             icon: 'close',
             type: 'fail',
