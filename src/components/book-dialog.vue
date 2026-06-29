@@ -5,6 +5,7 @@
             title="点歌"
             show-cancel-button
             confirm-button-text="点歌"
+            :confirm-button-disabled="isFormInvalid()"
             @update:show="(e) => emit('update:modelValue', e)"
             @confirm="handleBook"
             @cancel="resetDialog"
@@ -32,6 +33,15 @@
                 clearable
                 label="BV号"
                 placeholder="请输入BV号"
+            />
+            <van-field
+                class="book-dialog-field"
+                v-if="video_type == 1"
+                v-model="BV_P"
+                type="digit"
+                center
+                label="分P"
+                placeholder="请输入P数(选填)"
             />
             <van-uploader
                 class="book-dialog-upload"
@@ -86,6 +96,8 @@ import { book } from '../common/easyk_api';
 import { uploadVideo } from '../common/uploader';
 
 const empty_regex = new RegExp(/^\s*$/)
+const num_regex = new RegExp(/^\d+$/)
+const bv_regex = new RegExp(/^(?:av\d+)|(?:BV[1-9A-HJ-NP-Za-km-z]+)$/)
 
 const props = defineProps(['modelValue'])
 const emit = defineEmits(['update:modelValue', 'loading', 'refresh'])
@@ -123,6 +135,7 @@ const video_types = [
 const title = ref<string>('')
 
 const BV_code = ref<string>('')
+const BV_P = ref<string>('')
 
 /**
  * 
@@ -153,6 +166,7 @@ const resetDialog = () => {
     video_type_cascader.value = 0
     preview_snapshot.value = ''
     BV_code.value = ''
+    BV_P.value = ''
     upload_files.value = []
 }
 
@@ -175,7 +189,6 @@ const handleBook = () => {
     const commitBook = (content : string) => {
         book(title.value, video_type.value, content)
         .then(() => {
-
             nextTick(() => {
                 showToast({
                     icon: 'passed',
@@ -252,7 +265,51 @@ const handleBook = () => {
 
             break
         case 1:
-            commitBook(BV_code.value)
+            if (BV_code.value.length == 0 || !BV_code.value.match(bv_regex)) {
+                showToast({
+                    icon: 'close',
+                    type: 'fail',
+                    zIndex: '3002',
+                    message: '请输入有效的BV号',
+                    closeOnClick: true,
+                    closeOnClickOverlay: true
+                })
+
+                emit('loading', false)
+                return
+            }
+
+            let commit_bv = BV_code.value
+
+            if (BV_P.value.length > 0 && !BV_P.value.match(empty_regex)) {
+                const invalidP = () => {
+                    showToast({
+                        icon: 'close',
+                        type: 'fail',
+                        zIndex: '3002',
+                        message: '请输入有效的P数',
+                        closeOnClick: true,
+                        closeOnClickOverlay: true
+                    })
+
+                    emit('loading', false)
+                }
+
+                if (BV_P.value.match(num_regex)) {
+                    let p : number = parseInt(BV_P.value)
+                    if (Number.isNaN(p) || p <= 0) {
+                        invalidP()
+                        return
+                    }
+
+                    commit_bv += `?p=${p}`
+                } else {
+                    invalidP()
+                    return
+                }
+            }
+
+            commitBook(commit_bv)
             break
         case 2:
             commitBook('')
@@ -260,6 +317,21 @@ const handleBook = () => {
         default:
             resetDialog()
             emit('loading', false)
+    }
+}
+
+const isFormInvalid = () : boolean => {
+    if (title.value.length == 0 || title.value.match(empty_regex)) return true
+
+    switch (video_type.value) {
+        case 0:
+            return upload_files.value.length == 0
+        case 1:
+            return (BV_code.value.length == 0 || !BV_code.value.match(bv_regex))
+        case 2:
+            return false
+        default:
+            return true
     }
 }
 

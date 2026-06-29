@@ -39,7 +39,10 @@ enum PanelAction {
     Contrast = 'contrast',
 
     //二维码显示
-    QRCode = 'qrcode'
+    QRCode = 'qrcode',
+
+    //公平模式
+    Fairness = 'fairness'
 }
 
 const queryCurrent = () => {

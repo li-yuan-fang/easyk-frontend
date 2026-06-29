@@ -148,6 +148,15 @@ import { ref } from "vue"
                     />
                 </template>
             </van-cell>
+            <van-cell v-if="panel_fairness_valid" center title="公平模式">
+                <template #right-icon>
+                    <van-switch
+                        v-model="panel_fairness"
+                        :loading="panel_loading"
+                        @click="handlePanel(PanelAction.Fairness, panel_fairness)"
+                    />
+                </template>
+            </van-cell>
             <van-cell
                 title="用户凭据"
                 is-link
@@ -194,6 +203,9 @@ const panel_roma = ref<boolean>(false)
 
 const panel_qrcode_valid = ref<boolean>(false)
 const panel_qrcode = ref<boolean>(false)
+
+const panel_fairness_valid = ref<boolean>(false)
+const panel_fairness = ref<boolean>(false)
 
 const panel_number : any = {}
 
@@ -258,6 +270,9 @@ const refreshPanel = (panel : any) => {
 
     panel_qrcode_valid.value = panel[PanelAction.QRCode] != undefined
     if (panel_qrcode_valid.value) panel_qrcode.value = panel[PanelAction.QRCode] ?? false
+
+    panel_fairness_valid.value = panel[PanelAction.Fairness] != undefined
+    if (panel_fairness_valid.value) panel_fairness.value = panel[PanelAction.Fairness] ?? false
 }
 
 //提交面板操作
