@@ -14,10 +14,9 @@
             type="primary"
             icon="question-o"
             style="height: unset; display: flex; padding: 0.2rem 0.5rem;"
-            plain
             @click="handleRandom"
           >
-            随机
+            随机排序
           </van-button>
       </template>
     </van-notice-bar>
