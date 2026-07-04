@@ -14,6 +14,7 @@ export {
     reorderBook,
     push,
     pause,
+    random,
     upload_apply,
     upload_quiry,
     upload_block,
@@ -140,6 +141,15 @@ const reorderBook = (id : string) => {
 const push = () => {
     return new Promise<void>((resolve, reject) => {
         axios.get(`${host}/push`, {
+            timeout: 5000
+        }).then(() => resolve())
+        .catch(() => reject('无法连接到服务器'))
+    })
+}
+
+const random = () => {
+    return new Promise<void>((resolve, reject) => {
+        axios.get(`${host}/random`, {
             timeout: 5000
         }).then(() => resolve())
         .catch(() => reject('无法连接到服务器'))

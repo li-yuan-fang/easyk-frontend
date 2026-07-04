@@ -6,6 +6,10 @@
         class="book-refresh"
         :disabled="drag_rank"
         @click="confirmRank"
+        :style="{
+            'overflow-y': drag_rank ? 'hidden' : 'auto',
+            'touch-action': drag_rank ? 'none' : 'pan-y'
+        }"
     >
         <div v-if="books && books.list?.length > 0" class="book-container" >
             <van-cell-group
@@ -178,6 +182,8 @@ const updateRankPos = (index : number) => {
 const handleTouchMove = (e : TouchEvent) => {
     if (!drag_rank.value || !e.changedTouches || e.changedTouches.length == 0) return
 
+    e.preventDefault() // 阻止默认滚动行为
+
     let targetY = -1
     for (let i = 0; i < e.changedTouches.length; i++) {
         if (e.changedTouches[i]) {
@@ -240,7 +246,7 @@ const reload = (slient : boolean = false) => {
 defineExpose({ reload })
 
 onMounted(() => {
-    document.addEventListener('touchmove', handleTouchMove)
+    document.addEventListener('touchmove', handleTouchMove, { passive: false })
     reload()
 })
 
@@ -258,7 +264,6 @@ onUnmounted(() => {
 
 .book-refresh {
     flex: 1;
-    overflow-y: auto;
 }
 
 .book-container {
@@ -266,7 +271,6 @@ onUnmounted(() => {
     background: transparent;
     margin: 0;
     padding: 1rem 0;
-    overflow-y: auto;
 }
 
 .book-list-item-tool {

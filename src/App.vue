@@ -3,12 +3,24 @@
     <!-- 当前播放 -->
     <van-notice-bar
       class="playing-status"
-      v-if="current"
-      left-icon="play-circle-o"
       color="#1989fa"
       background="#ecf9ff"
-      :text="current ? `正在播放: ${current.title} (来自 ${current.order})` : ''"
-    />
+      :left-icon="current ? 'play-circle-o' : 'stop-circle-o'"
+      :text="current ? `正在播放: ${current.title} (来自 ${current.order})` : '当前无播放源'"
+    >
+      <template #right-icon>
+        <van-button
+            class="playing-status-right"
+            type="primary"
+            icon="question-o"
+            style="height: unset; display: flex; padding: 0.2rem 0.5rem;"
+            plain
+            @click="handleRandom"
+          >
+            随机
+          </van-button>
+      </template>
+    </van-notice-bar>
 
     <!-- 内容 -->
     <div class="content-container">
@@ -71,7 +83,7 @@
 </template>
 
 <script setup lang="ts">
-import { queryCurrent } from './common/easyk_api';
+import { queryCurrent, random } from './common/easyk_api';
 import BookList from './components/book-list.vue';
 import OutdateList from './components/outdate-list.vue';
 import Tabbar from './components/tabbar.vue';
@@ -80,6 +92,7 @@ import BookDialog from './components/book-dialog.vue';
 import PassDialog from './components/pass-dialog.vue';
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 import type { BookListItem } from './common/book_interfaces';
+import { showToast } from 'vant';
 
 //主界面相关
 const active_page = ref<number>(0)
@@ -105,8 +118,9 @@ const pass_shown = ref<boolean>(false)
 const loading_books = ref<boolean>(false)
 const loading_outdates = ref<boolean>(false)
 const loading_book = ref<boolean>(false)
+const loading_random = ref<boolean>(false)
 
-const isLoading = () => loading_books.value || loading_outdates.value || loading_book.value
+const isLoading = () => loading_books.value || loading_outdates.value || loading_book.value || loading_random.value
 
 //气泡移动
 const handleBubbleMove = () => {
@@ -148,6 +162,33 @@ const updateState = () => {
 const handleBookRefresh = () => {
   if (active_page.value == 0 && book_list.value)
     book_list.value.reload()
+}
+
+//随机排序
+const handleRandom = () => {
+  loading_random.value = true
+
+  random().then(() => {
+    if (book_list.value) book_list.value.reload(true)
+
+    showToast({
+      icon: 'passed',
+      type: 'success',
+      zIndex: '3002',
+      message: '随机排序成功',
+      closeOnClick: true,
+      closeOnClickOverlay: true
+    })
+  }).catch(() => {
+    showToast({
+      icon: 'close',
+      type: 'fail',
+      zIndex: '3002',
+      message: '随机排序失败',
+      closeOnClick: true,
+      closeOnClickOverlay: true
+    })
+  }).finally(() => loading_random.value = false)
 }
 
 onMounted(() => {
@@ -206,8 +247,9 @@ onBeforeUnmount(() => {
   z-index: 102;
 }
 
-.playing-status {
-  width: 100%;
+.playing-status-right {
+  position: absolute;
+  right: 1rem;
 }
 
 .virtual-tabbar-box {
