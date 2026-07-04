@@ -418,7 +418,7 @@ defineExpose({ show, isShown })
 
 .panel-button {
     font-size: 1rem;
-    margin: 0 1rem;
+    margin: 0 0.5rem;
 }
 
 .panel-button-round {
