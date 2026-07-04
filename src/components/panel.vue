@@ -11,6 +11,15 @@ import { ref } from "vue"
         <div class="panel-buttons-group">
             <van-button
                 type="primary"
+                icon="replay"
+                class="panel-button"
+                @click="handleReplay"
+                :loading="loading_action"
+            >
+                重唱
+            </van-button>
+            <van-button
+                type="primary"
                 icon="pause-circle-o"
                 class="panel-button"
                 @click="handlePause"
@@ -176,7 +185,7 @@ import { ref } from "vue"
 import NumberDialog from './number-dialog.vue';
 import { showToast } from 'vant'
 import { nextTick, ref } from 'vue'
-import { getPanel, PanelAction, pause, push, setVolume, updatePanel } from '../common/easyk_api'
+import { getPanel, PanelAction, pause, push, replay, setVolume, updatePanel } from '../common/easyk_api'
 
 //数值对话框
 const num_dialog = ref()
@@ -211,6 +220,32 @@ const panel_number : any = {}
 
 const panel_loading = ref<boolean>(false)
 const volume_uploading = ref<boolean>(false)
+
+//面板按键 - 重唱
+const handleReplay = () => {
+    loading_action.value = true
+    replay().then(() => {
+        showToast({
+            icon: 'passed',
+            type: 'success',
+            zIndex: '3002',
+            message: '重唱成功',
+            closeOnClick: true,
+            closeOnClickOverlay: true
+        })
+
+        reloadPanel()
+    }).catch(() => {
+        showToast({
+            icon: 'close',
+            type: 'fail',
+            zIndex: '3002',
+            message: '重唱失败',
+            closeOnClick: true,
+            closeOnClickOverlay: true
+        })
+    }).finally(() => loading_action.value = false)
+}
 
 //面板按键 - 暂停
 const handlePause = () => {
@@ -383,7 +418,7 @@ defineExpose({ show, isShown })
 
 .panel-button {
     font-size: 1rem;
-    margin: 0 3rem;
+    margin: 0 1rem;
 }
 
 .panel-button-round {

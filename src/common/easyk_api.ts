@@ -12,6 +12,7 @@ export {
     rankBook,
     queryOutdatedList,
     reorderBook,
+    replay,
     push,
     pause,
     random,
@@ -135,6 +136,15 @@ const reorderBook = (id : string) => {
                 reject(reason.response?.statusText || '无法连接到服务器')
             }
         })
+    })
+}
+
+const replay = () => {
+    return new Promise<void>((resolve, reject) => {
+        axios.get(`${host}/replay`, {
+            timeout: 5000
+        }).then(() => resolve())
+        .catch(() => reject('无法连接到服务器'))
     })
 }
 
