@@ -8,7 +8,10 @@
       :left-icon="current ? 'play-circle-o' : 'stop-circle-o'"
       :text="current ? `正在播放: ${current.title} (来自 ${current.order})` : '当前无播放源'"
     >
-      <template #right-icon>
+      <template
+        #right-icon
+        v-if="active_page == 0"
+      >
         <van-button
             class="playing-status-right"
             type="primary"
@@ -159,8 +162,10 @@ const updateState = () => {
 
 //刷新已点列表
 const handleBookRefresh = () => {
-  if (active_page.value == 0 && book_list.value)
+  if (active_page.value == 0 && book_list.value) {
     book_list.value.reload()
+    queryCurrent().then((c) => current.value = c)
+  }
 }
 
 //随机排序
@@ -247,8 +252,7 @@ onBeforeUnmount(() => {
 }
 
 .playing-status-right {
-  position: absolute;
-  right: 1rem;
+  margin: 0 0 0 0.5rem;
 }
 
 .virtual-tabbar-box {
