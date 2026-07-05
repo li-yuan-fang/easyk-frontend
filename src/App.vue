@@ -19,7 +19,7 @@
             style="height: unset; display: flex; padding: 0.2rem 0.5rem;"
             @click="handleRandom"
           >
-            随机排序
+            随机
           </van-button>
       </template>
     </van-notice-bar>
