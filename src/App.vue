@@ -94,7 +94,7 @@ import BookDialog from './components/book-dialog.vue';
 import PassDialog from './components/pass-dialog.vue';
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 import type { BookListItem } from './common/book_interfaces';
-import { showToast } from 'vant';
+import { showConfirmDialog, showToast } from 'vant';
 
 //主界面相关
 const active_page = ref<number>(0)
@@ -170,29 +170,35 @@ const handleBookRefresh = () => {
 
 //随机排序
 const handleRandom = () => {
-  loading_random.value = true
+  showConfirmDialog({
+    title: '随机确认',
+    message: '要对已点列表随机排序吗',
+  })
+  .then(() => {
+    loading_random.value = true
 
-  random().then(() => {
-    if (book_list.value) book_list.value.reload(true)
+    random().then(() => {
+      if (book_list.value) book_list.value.reload(true)
 
-    showToast({
-      icon: 'passed',
-      type: 'success',
-      zIndex: '3002',
-      message: '随机排序成功',
-      closeOnClick: true,
-      closeOnClickOverlay: true
-    })
-  }).catch(() => {
-    showToast({
-      icon: 'close',
-      type: 'fail',
-      zIndex: '3002',
-      message: '随机排序失败',
-      closeOnClick: true,
-      closeOnClickOverlay: true
-    })
-  }).finally(() => loading_random.value = false)
+      showToast({
+        icon: 'passed',
+        type: 'success',
+        zIndex: '3002',
+        message: '随机成功',
+        closeOnClick: true,
+        closeOnClickOverlay: true
+      })
+    }).catch(() => {
+      showToast({
+        icon: 'close',
+        type: 'fail',
+        zIndex: '3002',
+        message: '随机失败',
+        closeOnClick: true,
+        closeOnClickOverlay: true
+      })
+    }).finally(() => loading_random.value = false)
+  })
 }
 
 onMounted(() => {
