@@ -145,13 +145,13 @@ const handleBookRank = (index : number, rank : boolean = false) => {
         }
         
         reload()
-    }).catch(() => {
+    }).catch((reason) => {
         emit('loading', false)
         showToast({
             icon: 'close',
             type: 'fail',
             zIndex: '3002',
-            message: `${rank ? '排序' : '顶歌'}失败`,
+            message: `${rank ? '排序' : '顶歌'}失败\n${reason}`,
             closeOnClick: true,
             closeOnClickOverlay: true
         })

@@ -87,10 +87,16 @@ const rankBook = (id : string, rank : number = 0) => {
             timeout: 5000
         }).then(() => resolve())
         .catch((reason : AxiosError) => {
-            if (reason.status == 422) {
-                reject('无效请求\n请尝试刷新页面')
-            } else {
-                reject(reason.response?.statusText || '无法连接到服务器')
+            switch (reason.status) {
+                case 403:
+                    reject('公平模式不允许顶歌/排序')
+                    break
+                case 422:
+                    reject('无效请求')
+                    break
+                default:
+                    reject(reason.response?.statusText || '无法连接到服务器')
+                    break
             }
         })
     })
