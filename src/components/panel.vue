@@ -219,7 +219,7 @@ const panel_fairness = ref<boolean>(false)
 const panel_number : any = {}
 
 const panel_loading = ref<boolean>(false)
-const volume_uploading = ref<boolean>(false)
+let volume_uploading : boolean = false
 
 //面板按键 - 重唱
 const handleReplay = () => {
@@ -327,25 +327,25 @@ const reloadPanel = () => {
 }
 
 const commitVolume = (value : number, refresh : boolean = false) => {
-    volume_uploading.value = true
+    volume_uploading = true
     setVolume(value).then((v) => {
         if (refresh) panel_volume.value = v
-    }).finally(() => volume_uploading.value = false)
+    }).finally(() => volume_uploading = false)
 }
 
 //提交音量更新
 const handleVolume = () => {
-    if (volume_uploading.value) return
+    if (volume_uploading) return
 
     commitVolume(panel_volume.value / 100)
 }
 
 //提交最终音量更新
 const handleVolumeComplete = () => {
-    if (panel_loading.value || volume_uploading.value) {
+    if (panel_loading.value || volume_uploading) {
         //循环检测并保证提交
         let interval = setInterval(() => {
-            if (!panel_loading.value && !volume_uploading.value) {
+            if (!panel_loading.value && !volume_uploading) {
                 clearInterval(interval)
                 handlePanel(PanelAction.Volume, panel_volume.value / 100)
             }

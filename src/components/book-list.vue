@@ -1,5 +1,6 @@
 <template>
     <van-pull-refresh
+        ref="scroll_container"
         v-model="manual_loading"
         @refresh="handleBookRefresh"
         success-text="刷新成功"
@@ -42,7 +43,7 @@
                             name="ascending"
                             size="1.6rem"
                             @mousedown="(e : MouseEvent) => handleRank(e, index)"
-                            @touchstart="handleRank(undefined, index)"
+                            @touchstart.prevent="(e : TouchEvent) => handleRank(e, index)"
                             :color="(drag_rank && drag_current == index) ? 'var(--van-button-primary-background)' : 'inherit'"
                         />
                         <van-icon
@@ -71,15 +72,23 @@ import { queryBookList, removeBook, rankBook } from '../common/easyk_api';
 
 //已点列表
 const books = ref<BookList>({ list: [] })
+const scroll_container = ref<any>()
 
 //手动刷新中
 const manual_loading = ref<boolean>(false)
 
 //拖拽排序
 const drag_rank = ref<boolean>(false)
-const drag_start = ref<number>(-1)
 const drag_current = ref<number>(-1)
-const drag_event = ref<MouseEvent | undefined>(undefined)
+let drag_start : number = -1
+let drag_event : MouseEvent | undefined = undefined
+let drag_confirming : boolean = false
+let auto_scroll_frame : number | undefined = undefined
+let auto_scroll_speed : number = 0
+let auto_scroll_pointer_y : number = -1
+
+const auto_scroll_edge : number = 80
+const auto_scroll_max_speed : number = 18
 
 const emit = defineEmits(['loading'])
 
@@ -161,13 +170,19 @@ const handleBookRank = (index : number, rank : boolean = false) => {
 }
 
 //开始拖拽
-const handleRank = (e : MouseEvent | undefined, index : number) => {
+const handleRank = (e : MouseEvent | TouchEvent | undefined, index : number) => {
+    if (e && 'touches' in e && e.cancelable) e.preventDefault()
+
     drag_rank.value = true
+    drag_confirming = false
     drag_current.value = index
-    drag_start.value = index
+    drag_start = index
 
     //先触发结束事件 避免影响上拉刷新组件
-    if (e && e.type == 'mousedown') drag_event.value = e
+    if (e && e.type == 'mousedown' && 'button' in e) drag_event = e
+
+    const pointer_y = e ? getPointerY(e) : undefined
+    if (pointer_y != undefined) handleDragMove(pointer_y)
 }
 
 //拖拽更新选中歌曲位置
@@ -180,45 +195,169 @@ const updateRankPos = (index : number) => {
     drag_current.value = index
 }
 
+const getScrollContainer = () : HTMLElement | undefined => {
+    const target = scroll_container.value?.$el || scroll_container.value
+    return target instanceof HTMLElement ? target : undefined
+}
+
+const getPointerY = (e : MouseEvent | TouchEvent) : number | undefined => {
+    if ('touches' in e) {
+        return e.touches[0]?.clientY ?? e.changedTouches[0]?.clientY
+    }
+
+    return e.clientY
+}
+
+const getAutoScrollSpeed = (targetY : number) : number => {
+    const container = getScrollContainer()
+    if (!container) return 0
+
+    const bound = container.getBoundingClientRect()
+    if (targetY < bound.top + auto_scroll_edge) {
+        if (container.scrollTop <= 0) return 0
+
+        const rate = Math.min(1, (bound.top + auto_scroll_edge - targetY) / auto_scroll_edge)
+        return -Math.ceil(auto_scroll_max_speed * rate)
+    }
+
+    if (targetY > bound.bottom - auto_scroll_edge) {
+        if (container.scrollTop + container.clientHeight >= container.scrollHeight) return 0
+
+        const rate = Math.min(1, (targetY - (bound.bottom - auto_scroll_edge)) / auto_scroll_edge)
+        return Math.ceil(auto_scroll_max_speed * rate)
+    }
+
+    return 0
+}
+
+const updateRankPosByPointer = (targetY : number) => {
+    const elements = document.getElementsByClassName('book-list-item')
+    let nearest_index = -1
+    let nearest_distance = Number.MAX_SAFE_INTEGER
+
+    for (let i = 0; i < elements.length; i++) {
+        const bound = (<HTMLElement> (<any> elements[i])).getBoundingClientRect()
+        const center = bound.top + bound.height / 2
+        const distance = Math.abs(targetY - center)
+
+        if (distance < nearest_distance) {
+            nearest_index = i
+            nearest_distance = distance
+        }
+
+        if (targetY >= bound.top && targetY <= bound.top + bound.height) {
+            updateRankPos(i)
+            return
+        }
+    }
+
+    const container = getScrollContainer()
+    if (!container || nearest_index < 0) return
+
+    const bound = container.getBoundingClientRect()
+    if (targetY >= bound.top && targetY <= bound.bottom) updateRankPos(nearest_index)
+}
+
+const stopAutoScroll = () => {
+    auto_scroll_speed = 0
+
+    if (auto_scroll_frame != undefined) {
+        cancelAnimationFrame(auto_scroll_frame)
+        auto_scroll_frame = undefined
+    }
+}
+
+const runAutoScroll = () => {
+    const container = getScrollContainer()
+    if (!drag_rank.value || !container || auto_scroll_speed == 0) {
+        auto_scroll_frame = undefined
+        return
+    }
+
+    const last_top = container.scrollTop
+    container.scrollTop += auto_scroll_speed
+    if (container.scrollTop != last_top) updateRankPosByPointer(auto_scroll_pointer_y)
+
+    auto_scroll_speed = getAutoScrollSpeed(auto_scroll_pointer_y)
+    if (auto_scroll_speed == 0) {
+        auto_scroll_frame = undefined
+        return
+    }
+
+    auto_scroll_frame = requestAnimationFrame(runAutoScroll)
+}
+
+const updateAutoScroll = (targetY : number) => {
+    auto_scroll_pointer_y = targetY
+    auto_scroll_speed = getAutoScrollSpeed(targetY)
+
+    if (auto_scroll_speed == 0) {
+        stopAutoScroll()
+        return
+    }
+
+    if (auto_scroll_frame == undefined) {
+        auto_scroll_frame = requestAnimationFrame(runAutoScroll)
+    }
+}
+
+const handleDragMove = (targetY : number) => {
+    if (!drag_rank.value) return
+
+    updateRankPosByPointer(targetY)
+    updateAutoScroll(targetY)
+}
+
+const handleDragOver = (e : DragEvent) => {
+    if (!drag_rank.value) return
+
+    e.preventDefault()
+    handleDragMove(e.clientY)
+}
+
+const handleDrop = (e : DragEvent) => {
+    if (!drag_rank.value) return
+
+    e.preventDefault()
+    confirmRank()
+}
+
 //检测touchmove适配移动端
 const handleTouchMove = (e : TouchEvent) => {
     if (!drag_rank.value || !e.changedTouches || e.changedTouches.length == 0) return
 
     e.preventDefault() // 阻止默认滚动行为
 
-    let targetY = -1
-    for (let i = 0; i < e.changedTouches.length; i++) {
-        if (e.changedTouches[i]) {
-            targetY = e.changedTouches[i]?.clientY || -1
-            break
-        }
-    }
+    const targetY = getPointerY(e)
+    if (targetY == undefined) return
 
-    let elements = document.getElementsByClassName('book-list-item')
-    for (let i = 0; i < elements.length; i++) {
-        let bound = (<HTMLElement> (<any> elements[i])).getBoundingClientRect()
-        if (targetY >= bound.y && targetY <= bound.y + bound.height) {
-            updateRankPos(i)
-            break
-        }
-    }
+    handleDragMove(targetY)
 }
 
 //提交排序更新
 const confirmRank = () => {
+    if (!drag_rank.value || drag_confirming) return
+
+    drag_confirming = true
+
+    stopAutoScroll()
+
     //提交更新
-    if (drag_rank.value && drag_current.value >= 0 && drag_current.value != drag_start.value)
+    if (drag_rank.value && drag_current.value >= 0 && drag_current.value != drag_start)
         handleBookRank(drag_current.value, true)
 
     drag_current.value = -1
-    drag_start.value = -1
+    drag_start = -1
 
-    if (drag_event.value) {
-        document.dispatchEvent(new MouseEvent('mouseup', drag_event.value))
-        drag_event.value = undefined
+    if (drag_event) {
+        document.dispatchEvent(new MouseEvent('mouseup', drag_event))
+        drag_event = undefined
     }
 
-    nextTick(() => drag_rank.value = false)
+    nextTick(() => {
+        drag_rank.value = false
+        drag_confirming = false
+    })
 }
 
 //重新加载列表
@@ -249,11 +388,22 @@ defineExpose({ reload })
 
 onMounted(() => {
     document.addEventListener('touchmove', handleTouchMove, { passive: false })
+    document.addEventListener('touchend', confirmRank)
+    document.addEventListener('touchcancel', confirmRank)
+    document.addEventListener('dragover', handleDragOver)
+    document.addEventListener('dragend', confirmRank)
+    document.addEventListener('drop', handleDrop)
     reload()
 })
 
 onUnmounted(() => {
+    stopAutoScroll()
     document.removeEventListener('touchmove', handleTouchMove)
+    document.removeEventListener('touchend', confirmRank)
+    document.removeEventListener('touchcancel', confirmRank)
+    document.removeEventListener('dragover', handleDragOver)
+    document.removeEventListener('dragend', confirmRank)
+    document.removeEventListener('drop', handleDrop)
 })
 
 </script>
