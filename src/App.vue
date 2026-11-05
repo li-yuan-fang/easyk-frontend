@@ -106,7 +106,6 @@ const book_list = ref()
 
 //当前播放
 const current = ref<BookListItem | undefined>(undefined)
-let refresh_interval : ReturnType<typeof setInterval> | undefined = undefined
 
 //控制面板
 const panel = ref()
@@ -206,6 +205,15 @@ onMounted(() => {
     bubble_offset.value.y = max_top - 24 - 48
 
     EasyKState.usePush(reloadCurrent)
+    EasyKState.usePush((e) => {
+        console.log('push', e)
+    })
+    EasyKState.useLoaded((e) => {
+        console.log('loaded', e)
+    })
+    EasyKState.usePlaying((e) => {
+        console.log('playing', e)
+    })
 })
 
 </script>

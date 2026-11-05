@@ -13,6 +13,7 @@ const GET_TIMEOUT_MS = 10000
 export {
     reload,
     getId,
+    getSnapshot,
     seek,
     push,
     pause,
@@ -80,6 +81,10 @@ interface Connection {
     /** 是否为 GET 模式下发起的恢复探测。 */
     probe: boolean
     opened: boolean
+    /** 自动重连成功前，是否已因异常发起过一次性 GET 同步。 */
+    resyncing: boolean
+    /** 当前持有的同步请求；整个断线周期内的异常只触发一次 GET 同步。 */
+    resyncRequest?: SnapshotRequest
 }
 
 interface Session {
@@ -204,6 +209,7 @@ const sameMedia = (left: BookListItem | null, right: BookListItem | null): boole
         left.id === right.id && left.title === right.title && left.order === right.order)
 }
 
+// GET 同步与轮询共用：比对两次快照得出应补发的钩子，快照相同则返回空数组。
 const snapshotEvents = (previous: Snapshot | undefined, next: Snapshot): StateEvent[] => {
     // 媒体变化和完整播放器更新优先，不能再叠加局部 playing 通知。
     if (!previous || !sameMedia(previous.media, next.media)) return initialEvents(next)
@@ -221,20 +227,47 @@ const snapshotEvents = (previous: Snapshot | undefined, next: Snapshot): StateEv
     return before.state !== after.state || before.rate !== after.rate ? [playingEvent(after)] : []
 }
 
-const invoke = <T>(callback: Callback<T>, data: T): void => {
-    // 同步异常和异步拒绝分别隔离；不等待业务回调，避免阻塞同步调度。
+// 只有这些同步异常才说明回调依赖的组件/作用域已销毁，业务逻辑自身的异常不移除订阅。
+const INVALID_CALLBACK_ERRORS = ['ReferenceError', 'TypeError']
+const INVALID_CALLBACK_MESSAGE = /(Cannot read propert|Cannot set propert|is not a function|Cannot access '|before initialization|is not defined|undefined \(reading|undefined \(setting)/
+
+/** 判断回调是否因绑定的组件/作用域已销毁而不复可用；只能用于同步抛出的异常。 */
+const invalidCallbackError = (error: unknown): boolean => {
+    if (error === null || typeof error !== 'object') return false
+    const { name, message } = error as { name?: unknown; message?: unknown }
+    return typeof name === 'string' && INVALID_CALLBACK_ERRORS.includes(name) &&
+        typeof message === 'string' && INVALID_CALLBACK_MESSAGE.test(message)
+}
+
+/** 注销订阅；取消后不得再从任何通道回调该订阅。 */
+const removeSubscription = <K extends EventName>(type: K, subscription: Subscription<EventPayloads[K]>): void => {
+    subscription.active = false
+    subscriptions[type].delete(subscription)
+}
+
+/** 调用订阅回调；同步抛出失效类异常时立即注销该订阅，返回是否仍有效。 */
+const invokeSubscription = <K extends EventName>(
+    type: K, subscription: Subscription<EventPayloads[K]>, data: EventPayloads[K]): boolean => {
     try {
-        void Promise.resolve(callback(data)).catch(error => report('Event callback rejected', error))
+        void Promise.resolve(subscription.callback(data)).catch(error => report('Event callback rejected', error))
     } catch (error) {
         report('Event callback threw', error)
+        if (invalidCallbackError(error)) {
+            removeSubscription(type, subscription)
+            report('Removed invalid callback subscription', error)
+            return false
+        }
     }
+    return true
 }
 
 const notify = <K extends EventName>(owner: Session, type: K, data: EventPayloads[K], cutoff: number): void => {
     for (const subscription of [...subscriptions[type]]) {
         // 回调可能重入 reload，每次调用前都要确认旧批次仍有效。
         if (!isCurrent(owner)) return
-        if (subscription.active && subscription.order < cutoff) invoke(subscription.callback, data)
+        if (!subscription.active || subscription.order >= cutoff) continue
+        // 回调已失效时由 invokeSubscription 自动移除注册，后续事件不再回调。
+        if (!invokeSubscription(type, subscription, data)) continue
     }
 }
 
@@ -262,19 +295,21 @@ const bindAppLifecycle = (): void => {
 
 const subscribe = <K extends EventName>(type: K, callback: Callback<EventPayloads[K]>): () => void => {
     bindAppLifecycle()
+    // 同一回调对同一事件只保留一个注册；重复注册时旧注册失效，由新注册接管。
+    for (const existing of [...subscriptions[type]]) {
+        if (existing.callback === callback) removeSubscription(type, existing)
+    }
     const subscription = { callback, active: true, order: subscriptionOrder++ }
     subscriptions[type].add(subscription)
-    const unsubscribe = () => {
-        subscription.active = false
-        subscriptions[type].delete(subscription)
-    }
+    const unsubscribe = () => removeSubscription(type, subscription)
     if (getCurrentScope()) onScopeDispose(unsubscribe)
 
     const snapshot = session?.snapshot
     if (snapshot) {
         // 根据事件类型回放当前有效数据；停止状态不回放 loaded。
         const replay = replayValue(type, snapshot)
-        if (replay !== undefined) invoke(callback, replay)
+        // 回放同样走失效检查，已销毁作用域的回调直接移除注册。
+        if (replay !== undefined) invokeSubscription(type, subscription, replay)
     }
     return unsubscribe
 }
@@ -306,6 +341,9 @@ const usePlaying = (callback: Callback<EventPayloads['playing']>): () => void =>
 /** 读取当前媒体 ID；没有有效快照或媒体时返回 undefined，不触发同步或事件。 */
 const getId = (): string | undefined => {
     return session?.snapshot?.media?.id
+}
+const getSnapshot = (): Snapshot | undefined => {
+    return session?.snapshot
 }
 
 /** 本地调整已加载媒体的进度；返回值仅表示本地是否受理，不发起控制请求。 */
@@ -400,6 +438,8 @@ const closeConnection = (owner: Session): void => {
     clearTimeout(connection.timer)
     connection.removeListeners?.()
     connection.source?.close()
+    // 待决的同步 GET 随连接失效取消，其结果不能再提交快照或补发钩子。
+    clearResyncRequest(connection, connection.resyncRequest)
 }
 
 const stopSession = (): void => {
@@ -483,13 +523,44 @@ const validConnection = (owner: Session, connection: Connection): boolean => {
     return isCurrent(owner) && owner.connection === connection
 }
 
+/** 连接关闭时取消在途的同步 GET，其结果不能再提交快照或补发钩子。 */
+const clearResyncRequest = (connection: Connection, request?: SnapshotRequest): void => {
+    if (!request || connection.resyncRequest !== request) return
+    connection.resyncRequest = undefined
+    request.cancel()
+}
+
+/** 连接或事件异常后按本地快照与 GET 结果比对补发一次钩子；同一断线周期只同步一次。 */
+const resync = (owner: Session, connection: Connection): void => {
+    // GET 模式下轮询已负责全量同步，恢复探测异常不额外发请求。
+    if (connection.resyncing || connection.probe || owner.mode !== 'sse' || !owner.snapshot) return
+    connection.resyncing = true
+    const request = requestSnapshot()
+    connection.resyncRequest = request
+    void request.promise.then(snapshot => {
+        // 迟到的响应不得覆盖同一连接后续 SSE 帧、降级后的轮询结果或新会话的状态。
+        if (!validConnection(owner, connection) || owner.mode !== 'sse' || !owner.snapshot) return
+        const events = snapshotEvents(owner.snapshot, snapshot)
+        owner.snapshot = snapshot
+        dispatch(owner, events)
+    }, error => {
+        // 同步失败时保留本地快照，允许周期内的下一次异常重试，或由 GET 轮询兜底。
+        if (!validConnection(owner, connection)) return
+        report('SSE resync GET failed', error)
+        clearResyncRequest(connection, request)
+        connection.resyncing = false
+    }).finally(() => {
+        clearResyncRequest(connection, request)
+    })
+}
+
 const connect = (owner: Session, probe: boolean): void => {
     if (!isCurrent(owner) || owner.connection) return
     if (probe && !isVisible()) {
         owner.recoveryCount = SSE_RECOVERY_GET_COUNT
         return
     }
-    const connection: Connection = { probe, opened: false }
+    const connection: Connection = { probe, opened: false, resyncing: false }
     owner.connection = connection
     try {
         // 原生 EventSource 会忽略 : keep alive 等注释帧，无需增加心跳事件或计时器。
@@ -508,7 +579,11 @@ const connect = (owner: Session, probe: boolean): void => {
             // 恢复成功后先解除轮询请求归属，再取消请求，防止迟到 GET 覆盖 SSE 更新。
             owner.request = undefined
             request?.cancel()
+            // 重连成功后结束断线周期，下一次异常重新允许一次 GET 同步。
+            connection.resyncing = false
         }
+        // 服务端不支持 Last-Event-ID 回放，不使用 EventSource 自带的自动重连；
+        // 断开后立即关闭并交由本次异常处理，统一走库内的退避重连。
         source.onerror = () => connectionFailed(owner, connection, new Error('SSE connection failed'))
         const listeners = (['push', 'loaded', 'playing'] as const).map(type => {
             const listener = (event: MessageEvent) => receive(owner, connection, type, event.data)
@@ -536,6 +611,8 @@ const connectionFailed = (owner: Session, connection: Connection, error: unknown
     closeConnection(owner)
     owner.failures++
     report('SSE attempt failed', error)
+    // SSE 异常后先用一次 GET 拉取最新快照覆盖本地，再决定重连或降级。
+    resync(owner, connection)
     if (owner.mode === 'get') {
         // 恢复探测失败后重新累计 GET 次数，不进入普通 SSE 快速重试。
         owner.recoveryCount = 0
@@ -592,6 +669,8 @@ const receive = (owner: Session, connection: Connection, type: EventName, raw: u
         dispatch(owner, [event])
     } catch (error) {
         report(`Rejected SSE ${type} event`, error)
+        // 坏帧被丢弃后本地快照可能落后，用一次 GET 全量纠正。
+        resync(owner, connection)
     }
 }
 

@@ -16,6 +16,7 @@ export {
     push,
     pause,
     random,
+    seek,
     upload_apply,
     upload_quiry,
     upload_block,
@@ -166,6 +167,17 @@ const push = () => {
 const random = () => {
     return new Promise<void>((resolve, reject) => {
         axios.get(`${host}/random`, {
+            timeout: 5000
+        }).then(() => resolve())
+        .catch(() => reject('无法连接到服务器'))
+    })
+}
+
+const seek = (current : number) => {
+    return new Promise<void>((resolve, reject) => {
+        axios.post(`${host}/seek`, {
+            current
+        }, {
             timeout: 5000
         }).then(() => resolve())
         .catch(() => reject('无法连接到服务器'))

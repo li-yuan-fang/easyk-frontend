@@ -51,127 +51,136 @@ import { ref } from "vue"
                 <text>{{ panel_volume }}</text>
             </div>
         </div>
-        <van-cell-group
-            v-if="panel_accompaniment_valid"
-            class="panel-nickname-box"
-            inset
-        >
-            <van-cell center title="实时伴奏">
-                <template #right-icon>
-                    <van-switch
-                        v-model="panel_accompaniment"
-                        :loading="panel_loading"
-                        @click="handlePanel(PanelAction.Accompaniment, panel_accompaniment)"
-                    />
-                </template>
-            </van-cell>
-        </van-cell-group>
-        <van-cell-group class="panel-nickname-box" inset>
-            <van-cell
-                title="歌词选项"
-                center
-                is-link
-                :arrow-direction="panel_lyrics_unfold ? 'down' : 'right'"
-                @click="panel_lyrics_unfold = !panel_lyrics_unfold"
+        <div class="panel-volume-group panel-buttons-group">
+            <Progress
+                v-model="progres_valid"
+                :disabled="loading_action"
             />
-            <TransitionGroup name="shrink" tag="div">
-                <van-cell v-if="panel_lyrics_unfold" center>
-                    <template #title>
-                        <text class="panel-lyric-option-text">双层歌词</text>
-                    </template>
+        </div>
+        <div class="panel-scroll-wrapper">
+            <van-cell-group
+                v-if="panel_accompaniment_valid"
+                class="panel-nickname-box"
+                inset
+            >
+                <van-cell center title="实时伴奏">
                     <template #right-icon>
                         <van-switch
-                            v-model="panel_intersect"
+                            v-model="panel_accompaniment"
                             :loading="panel_loading"
-                            @click="handlePanel(PanelAction.Intersect, panel_intersect)"
+                            @click="handlePanel(PanelAction.Accompaniment, panel_accompaniment)"
                         />
                     </template>
                 </van-cell>
-                <van-cell v-if="panel_lyrics_unfold" center>
-                    <template #title>
-                        <text class="panel-lyric-option-text">显示假名</text>
-                    </template>
+            </van-cell-group>
+            <van-cell-group class="panel-nickname-box" inset>
+                <van-cell
+                    title="歌词选项"
+                    center
+                    is-link
+                    :arrow-direction="panel_lyrics_unfold ? 'down' : 'right'"
+                    @click="panel_lyrics_unfold = !panel_lyrics_unfold"
+                />
+                <TransitionGroup name="shrink" tag="div">
+                    <van-cell v-if="panel_lyrics_unfold" center>
+                        <template #title>
+                            <text class="panel-lyric-option-text">双层歌词</text>
+                        </template>
+                        <template #right-icon>
+                            <van-switch
+                                v-model="panel_intersect"
+                                :loading="panel_loading"
+                                @click="handlePanel(PanelAction.Intersect, panel_intersect)"
+                            />
+                        </template>
+                    </van-cell>
+                    <van-cell v-if="panel_lyrics_unfold" center>
+                        <template #title>
+                            <text class="panel-lyric-option-text">显示假名</text>
+                        </template>
+                        <template #right-icon>
+                            <van-switch
+                                v-model="panel_kana"
+                                :loading="panel_loading"
+                                @click="handlePanel(PanelAction.Kana, panel_kana)"
+                            />
+                        </template>
+                    </van-cell>
+                    <van-cell v-if="panel_lyrics_unfold" center>
+                        <template #title>
+                            <text class="panel-lyric-option-text">显示翻译</text>
+                        </template>
+                        <template #right-icon>
+                            <van-switch
+                                v-model="panel_translated"
+                                :loading="panel_loading"
+                                @click="handlePanel(PanelAction.Translated, panel_translated)"
+                            />
+                        </template>
+                    </van-cell>
+                    <van-cell v-if="panel_lyrics_unfold" center>
+                        <template #title>
+                            <text class="panel-lyric-option-text">显示罗马音</text>
+                        </template>
+                        <template #right-icon>
+                            <van-switch
+                                v-model="panel_roma"
+                                :loading="panel_loading"
+                                @click="handlePanel(PanelAction.Roma, panel_roma)"
+                            />
+                        </template>
+                    </van-cell>
+                    <van-cell
+                        v-if="panel_lyrics_unfold"
+                        center
+                        is-link
+                        @click="handleNumDialog(PanelAction.Offset)"
+                    >
+                    
+                        <template #title>
+                            <text class="panel-lyric-option-text">歌词延迟</text>
+                        </template>
+                    </van-cell>
+                    <van-cell
+                        v-if="panel_lyrics_unfold"
+                        center
+                        is-link
+                        @click="handleNumDialog(PanelAction.Contrast)"
+                    >
+                    
+                        <template #title>
+                            <text class="panel-lyric-option-text">歌词对比度</text>
+                        </template>
+                    </van-cell>
+                </TransitionGroup>
+            </van-cell-group>
+            <van-cell-group class="panel-nickname-box" style="margin-bottom: 1rem;" inset>
+                <van-cell v-if="panel_qrcode_valid" center title="显示二维码">
                     <template #right-icon>
                         <van-switch
-                            v-model="panel_kana"
+                            v-model="panel_qrcode"
                             :loading="panel_loading"
-                            @click="handlePanel(PanelAction.Kana, panel_kana)"
+                            @click="handlePanel(PanelAction.QRCode, panel_qrcode)"
                         />
                     </template>
                 </van-cell>
-                <van-cell v-if="panel_lyrics_unfold" center>
-                    <template #title>
-                        <text class="panel-lyric-option-text">显示翻译</text>
-                    </template>
+                <van-cell v-if="panel_fairness_valid" center title="公平模式">
                     <template #right-icon>
                         <van-switch
-                            v-model="panel_translated"
+                            v-model="panel_fairness"
                             :loading="panel_loading"
-                            @click="handlePanel(PanelAction.Translated, panel_translated)"
-                        />
-                    </template>
-                </van-cell>
-                <van-cell v-if="panel_lyrics_unfold" center>
-                    <template #title>
-                        <text class="panel-lyric-option-text">显示罗马音</text>
-                    </template>
-                    <template #right-icon>
-                        <van-switch
-                            v-model="panel_roma"
-                            :loading="panel_loading"
-                            @click="handlePanel(PanelAction.Roma, panel_roma)"
+                            @click="handlePanel(PanelAction.Fairness, panel_fairness)"
                         />
                     </template>
                 </van-cell>
                 <van-cell
-                    v-if="panel_lyrics_unfold"
-                    center
+                    title="用户凭据"
                     is-link
-                    @click="handleNumDialog(PanelAction.Offset)"
-                >
-                
-                    <template #title>
-                        <text class="panel-lyric-option-text">歌词延迟</text>
-                    </template>
-                </van-cell>
-                <van-cell
-                    v-if="panel_lyrics_unfold"
-                    center
-                    is-link
-                    @click="handleNumDialog(PanelAction.Contrast)"
-                >
-                
-                    <template #title>
-                        <text class="panel-lyric-option-text">歌词对比度</text>
-                    </template>
-                </van-cell>
-            </TransitionGroup>
-        </van-cell-group>
-        <van-cell-group class="panel-nickname-box" style="margin-bottom: 1rem;" inset>
-            <van-cell v-if="panel_qrcode_valid" center title="显示二维码">
-                <template #right-icon>
-                    <van-switch
-                        v-model="panel_qrcode"
-                        :loading="panel_loading"
-                        @click="handlePanel(PanelAction.QRCode, panel_qrcode)"
-                    />
-                </template>
-            </van-cell>
-            <van-cell v-if="panel_fairness_valid" center title="公平模式">
-                <template #right-icon>
-                    <van-switch
-                        v-model="panel_fairness"
-                        :loading="panel_loading"
-                        @click="handlePanel(PanelAction.Fairness, panel_fairness)"
-                    />
-                </template>
-            </van-cell>
-            <van-cell
-                title="用户凭据"
-                is-link
-                @click="emit('pass')"
-            />
-        </van-cell-group>
+                    @click="emit('pass')"
+                />
+            </van-cell-group>
+        </div>
+        
     </van-popup>
 
     <number-dialog
@@ -184,8 +193,10 @@ import { ref } from "vue"
 <script setup lang="ts">
 import NumberDialog from './number-dialog.vue';
 import { showToast } from 'vant'
-import { nextTick, ref } from 'vue'
+import { nextTick, onMounted, ref } from 'vue'
 import { getPanel, PanelAction, pause, push, replay, setVolume, updatePanel } from '../common/easyk_api'
+import Progress from './progress.vue';
+import * as EasyKState from '@/common/easyk_state';
 
 //数值对话框
 const num_dialog = ref()
@@ -221,6 +232,8 @@ const panel_number : any = {}
 const panel_loading = ref<boolean>(false)
 let volume_uploading : boolean = false
 
+const progres_valid = ref<boolean>(true)
+
 //面板按键 - 重唱
 const handleReplay = () => {
     loading_action.value = true
@@ -251,6 +264,7 @@ const handleReplay = () => {
 const handlePause = () => {
     loading_action.value = true
     pause().then(() => reloadPanel()).catch(() => {
+        EasyKState.pause()
         showToast({
             icon: 'close',
             type: 'fail',
@@ -266,6 +280,7 @@ const handlePause = () => {
 const handlePush = () => {
     loading_action.value = true
     push().then(() => {
+        EasyKState.push()
         showToast({
             icon: 'passed',
             type: 'success',
@@ -374,6 +389,13 @@ const emit = defineEmits(['pass'])
 
 defineExpose({ show, isShown })
 
+onMounted(() => {
+    //在加载完成时尝试启动进度条
+    EasyKState.useLoaded(() => {
+        progres_valid.value = true
+    })
+})
+
 </script>
 
 <style>
@@ -460,6 +482,14 @@ defineExpose({ show, isShown })
   max-height: 0;
   padding: 0;
   margin: 0;
+}
+
+.panel-scroll-wrapper {
+    max-height: 70vh;
+    overflow-y: auto;
+    touch-action: pan-y;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch; 
 }
 
 </style>

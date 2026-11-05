@@ -17,6 +17,7 @@ declare module 'vue' {
     OutdateList: typeof import('./src/components/outdate-list.vue')['default']
     Panel: typeof import('./src/components/panel.vue')['default']
     PassDialog: typeof import('./src/components/pass-dialog.vue')['default']
+    Progress: typeof import('./src/components/progress.vue')['default']
     Tabbar: typeof import('./src/components/tabbar.vue')['default']
     VanBackTop: typeof import('vant/es')['BackTop']
     VanButton: typeof import('vant/es')['Button']
