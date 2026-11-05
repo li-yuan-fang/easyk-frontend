@@ -65,7 +65,7 @@ const handleProgressCommit = () => {
 
         if (timer) clearInterval(timer)
         timer = setInterval(handleStep, 1000)
-    })
+    }).catch(() => recover())
 }
 
 const handleStep = () => {
@@ -125,11 +125,9 @@ const onPlayerLoaded = (state : EasyKState.PlayerState) => {
 }
 
 //恢复到准确的状态
-const recoverProgress = () : boolean => {
+const recover = () : boolean => {
     let snapshot = EasyKState.getSnapshot()
-    console.log(snapshot)
     if (!snapshot || !snapshot.media || snapshot.player.state == EasyKState.PlayState.Stopped) {
-        console.log('invalid close')
         closeProgress()
         return false
     }
@@ -145,13 +143,14 @@ const recoverProgress = () : boolean => {
 }
 
 onMounted(() => {
-    console.log('mounted')
-    if (!recoverProgress()) return
+    if (!recover()) return
 
     EasyKState.usePush(onPlayerPush)
     EasyKState.useLoaded(onPlayerLoaded)
     EasyKState.usePlaying(onPlayerPlaying)
 })
+
+defineExpose({ recover })
 
 </script>
 

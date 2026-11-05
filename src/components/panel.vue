@@ -54,6 +54,7 @@ import { ref } from "vue"
         <div class="panel-volume-group panel-buttons-group">
             <Progress
                 v-model="progres_valid"
+                ref="progress"
                 :disabled="loading_action"
             />
         </div>
@@ -233,6 +234,7 @@ const panel_loading = ref<boolean>(false)
 let volume_uploading : boolean = false
 
 const progres_valid = ref<boolean>(true)
+const progress = ref<typeof Progress>()
 
 //面板按键 - 重唱
 const handleReplay = () => {
@@ -379,7 +381,7 @@ const handleNumDialog = (action : PanelAction) => {
 
 //显示面板
 const show = () => {
-    if (!progres_valid.value) EasyKState.sync()
+    EasyKState.sync().then(() => progress.value?.recover())
 
     reloadPanel()
     panel_shown.value = true
