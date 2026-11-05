@@ -69,6 +69,7 @@ import { nextTick, onMounted, onUnmounted, ref } from 'vue';
 import { showConfirmDialog, showToast } from 'vant';
 import type { BookList, BookListItem } from '../common/book_interfaces';
 import { queryBookList, removeBook, rankBook } from '../common/easyk_api';
+import * as EasyKState from '@/common/easyk_state';
 
 //已点列表
 const books = ref<BookList>({ list: [] })
@@ -393,7 +394,9 @@ onMounted(() => {
     document.addEventListener('dragover', handleDragOver)
     document.addEventListener('dragend', confirmRank)
     document.addEventListener('drop', handleDrop)
+
     reload()
+    EasyKState.usePush(() => reload(true))
 })
 
 onUnmounted(() => {

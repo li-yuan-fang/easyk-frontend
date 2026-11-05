@@ -40,6 +40,7 @@ import { onMounted, ref } from 'vue';
 import { showToast } from 'vant';
 import type { BookList } from '../common/book_interfaces';
 import { queryOutdatedList, reorderBook } from '../common/easyk_api';
+import * as EasyKState from '@/common/easyk_state';
 
 const outdates = ref<BookList>({ list: [] })
 
@@ -101,6 +102,7 @@ defineExpose({ reload })
 
 onMounted(() => {
     reload()
+    EasyKState.usePush(reload)
 })
 
 </script>

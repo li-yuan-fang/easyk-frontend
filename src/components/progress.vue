@@ -30,7 +30,7 @@
 
 <script setup lang="ts">
 import { formatDuration } from '@/common/time_format';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import * as EasyKState from '@/common/easyk_state';
 import { seek } from '@/common/easyk_api';
 import type { BookListItem } from '@/common/book_interfaces';
