@@ -5,7 +5,6 @@ import { type UploadQuiry, type UploadSession } from "./uploader"
 const host : string = '/api'
 
 export {
-    queryCurrent,
     queryBookList,
     book,
     removeBook,
@@ -46,15 +45,6 @@ enum PanelAction {
 
     //公平模式
     Fairness = 'fairness'
-}
-
-const queryCurrent = () => {
-    return new Promise<BookListItem>((resolve, reject) => {
-        axios.get(`${host}/current`, {
-            timeout: 5000
-        }).then((resp) => resolve(<BookListItem> resp.data['current']))
-        .catch(() => reject('无法连接到服务器'))
-    })
 }
 
 const queryBookList = () => {

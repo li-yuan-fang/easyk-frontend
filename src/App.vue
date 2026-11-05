@@ -85,7 +85,7 @@
 </template>
 
 <script setup lang="ts">
-import { queryCurrent, random } from './common/easyk_api';
+import { random } from './common/easyk_api';
 import BookList from './components/book-list.vue';
 import OutdateList from './components/outdate-list.vue';
 import Tabbar from './components/tabbar.vue';
@@ -148,10 +148,7 @@ const reloadCurrent = (data : Readonly<BookListItem> | null) : void => {
 
 //刷新已点列表
 const handleBookRefresh = () => {
-    if (active_page.value == 0 && book_list.value) {
-        book_list.value.reload()
-        queryCurrent().then((c) => current.value = c)
-    }
+    if (active_page.value == 0 && book_list.value) book_list.value.reload()
 }
 
 //随机排序
