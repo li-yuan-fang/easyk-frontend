@@ -153,8 +153,9 @@ onMounted(() => {
 .progress-content {
     display: flex;
     flex-direction: row;
-    justify-content: end;
+    justify-content: right;
     align-items: center;
+    font-variant-numeric: tabular-nums;
 
     flex: 1;
     margin: 0 2rem;

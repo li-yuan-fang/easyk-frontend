@@ -427,8 +427,9 @@ onMounted(() => {
 .panel-volume-content {
     display: flex;
     flex-direction: row;
-    justify-content: start;
+    justify-content: left;
     align-items: center;
+    font-variant-numeric: tabular-nums;
 
     flex: 1;
     margin: 0 2rem;
