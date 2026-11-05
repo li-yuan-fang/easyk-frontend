@@ -68,7 +68,11 @@ const handleProgressCommit = () => {
     })
 }
 
-const handleStep = () => current.value += progress_step.value
+const handleStep = () => {
+    current.value += progress_step.value
+
+    if (current.value >= 1) closeProgress()
+}
 
 const closeProgress = () => {
     if (timer) {
@@ -78,6 +82,8 @@ const closeProgress = () => {
 
     emit('update:modelValue', false)
     rate.value = 1.0
+    duration.value = 0.0
+    current.value = 0.0
 }
 
 const onPlayerPush = (media : BookListItem | null) => {
