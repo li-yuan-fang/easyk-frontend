@@ -240,6 +240,7 @@ const progress = ref<typeof Progress>()
 const handleReplay = () => {
     loading_action.value = true
     replay().then(() => {
+        EasyKState.seek(0.0)
         showToast({
             icon: 'passed',
             type: 'success',
