@@ -25,6 +25,7 @@
 import { nextTick, onMounted, ref } from 'vue';
 import { showToast } from 'vant';
 import { getCookie, setCookie } from '../common/cookies';
+import * as EasyKState from '@/common/easyk_state';
 
 const empty_regex = new RegExp(/^\s*$/)
 
@@ -53,6 +54,7 @@ const handleConfirm = () => {
         setCookie('key', passkey.value, 7)
 
         emit('update:modelValue', false)
+        EasyKState.reload()
     }
 }
 
@@ -61,7 +63,13 @@ onMounted(() => {
     setCookie('key', passkey.value, 7)
 
     nickname.value = decodeURI(getCookie('name') || "")
-    if (nickname.value.match(empty_regex)) emit('update:modelValue', true)
+    if (nickname.value.match(empty_regex)) {
+        // 需要填写
+        emit('update:modelValue', true)
+    } else {
+        // 不需要填写
+        EasyKState.reload()
+    }
 })
 
 </script>

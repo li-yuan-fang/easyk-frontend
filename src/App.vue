@@ -95,6 +95,7 @@ import PassDialog from './components/pass-dialog.vue';
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 import type { BookListItem } from './common/book_interfaces';
 import { showConfirmDialog, showToast } from 'vant';
+import * as EasyKState from '@/common/easyk_state';
 
 //主界面相关
 const active_page = ref<number>(0)
@@ -142,22 +143,8 @@ const handleBubbleMove = () => {
 }
 
 //刷新当前播放
-const reloadCurrent = () => {
-    queryCurrent().then((c) => {
-        //自动刷新已点列表
-        if (current.value?.id != c?.id && active_page.value == 0) {
-            book_list.value.reload(true)
-        }
-
-        current.value = c
-    }).catch((reason) => console.log(`获取当前播放信息失败 - ${reason}`))
-}
-
-//刷新当前播放(定时)
-const updateState = () => {
-    if (document.visibilityState !== 'visible' || isLoading() || panel.value.isShown() || book_dialog_shown.value) return
-
-    reloadCurrent()
+const reloadCurrent = (data : Readonly<BookListItem> | null) : void => {
+    current.value = data ?? undefined
 }
 
 //刷新已点列表
@@ -218,12 +205,7 @@ onMounted(() => {
     bubble_offset.value.x = 24
     bubble_offset.value.y = max_top - 24 - 48
 
-    refresh_interval = setInterval(updateState, 10000)
-    setTimeout(reloadCurrent, 2000)
-})
-
-onBeforeUnmount(() => {
-    if (refresh_interval) clearInterval(refresh_interval)
+    EasyKState.usePush(reloadCurrent)
 })
 
 </script>
