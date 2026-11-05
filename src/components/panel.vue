@@ -379,6 +379,8 @@ const handleNumDialog = (action : PanelAction) => {
 
 //显示面板
 const show = () => {
+    if (!progres_valid.value) EasyKState.sync()
+
     reloadPanel()
     panel_shown.value = true
 }

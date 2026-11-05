@@ -14,6 +14,7 @@ export {
     reload,
     getId,
     getSnapshot,
+    sync,
     seek,
     push,
     pause,
@@ -99,6 +100,8 @@ interface Session {
     retryTimer?: ReturnType<typeof setTimeout>
     pollTimer?: ReturnType<typeof setTimeout>
     removeVisibilityListener?: () => void
+    /** 手动同步的在途请求；与轮询、断线同步互不干扰，最多一个。 */
+    manualRequest?: SnapshotRequest
 }
 
 const subscriptions: { [K in EventName]: Set<Subscription<EventPayloads[K]>> } = {
@@ -455,6 +458,9 @@ const stopSession = (): void => {
     previous.request = undefined
     previous.snapshot = undefined
     request?.cancel()
+    const manualRequest = previous.manualRequest
+    previous.manualRequest = undefined
+    manualRequest?.cancel()
 }
 
 const dispose = (): void => {
@@ -530,6 +536,40 @@ const clearResyncRequest = (connection: Connection, request?: SnapshotRequest): 
     request.cancel()
 }
 
+/** 手动触发一次全量 GET：用远端快照覆盖本地，并比对补发钩子；返回是否提交成功。 */
+const sync = async (): Promise<boolean> => {
+    const owner = session
+    const baseline = owner?.snapshot
+    // 未初始化完成时由 reload 的首次 GET 负责同步，这里只读不改。
+    if (!owner || !baseline) return false
+
+    // 连续触发时后一次优先：取消在途请求，最终只提交最新一次的结果。
+    owner.manualRequest?.cancel()
+    const request = requestSnapshot()
+    owner.manualRequest = request
+    try {
+        const snapshot = await request.promise
+        // 迟到的结果不得覆盖 SSE 帧、新会话或更新的手动/轮询结果。
+        if (!isCurrent(owner) || owner.manualRequest !== request) return false
+        applySnapshot(owner, snapshot)
+        return true
+    } catch (error) {
+        // 被后一次 sync 或 stopSession 取消属于正常竞态，不当作失败上报。
+        if (!isCurrent(owner) || owner.manualRequest !== request) return false
+        report('Manual state GET failed', error)
+        return false
+    } finally {
+        if (owner.manualRequest === request) owner.manualRequest = undefined
+    }
+}
+
+/** 提交全量快照并按差异派发钩子；三种 GET 路径共用的唯一提交口。 */
+const applySnapshot = (owner: Session, snapshot: Snapshot): void => {
+    const events = snapshotEvents(owner.snapshot, snapshot)
+    owner.snapshot = snapshot
+    dispatch(owner, events)
+}
+
 /** 连接或事件异常后按本地快照与 GET 结果比对补发一次钩子；同一断线周期只同步一次。 */
 const resync = (owner: Session, connection: Connection): void => {
     // GET 模式下轮询已负责全量同步，恢复探测异常不额外发请求。
@@ -540,9 +580,7 @@ const resync = (owner: Session, connection: Connection): void => {
     void request.promise.then(snapshot => {
         // 迟到的响应不得覆盖同一连接后续 SSE 帧、降级后的轮询结果或新会话的状态。
         if (!validConnection(owner, connection) || owner.mode !== 'sse' || !owner.snapshot) return
-        const events = snapshotEvents(owner.snapshot, snapshot)
-        owner.snapshot = snapshot
-        dispatch(owner, events)
+        applySnapshot(owner, snapshot)
     }, error => {
         // 同步失败时保留本地快照，允许周期内的下一次异常重试，或由 GET 轮询兜底。
         if (!validConnection(owner, connection)) return
@@ -689,9 +727,7 @@ const poll = async (owner: Session): Promise<void> => {
     try {
         const snapshot = await request.promise
         if (!isCurrent(owner) || owner.mode !== 'get' || owner.request !== request) return
-        const events = snapshotEvents(owner.snapshot, snapshot)
-        owner.snapshot = snapshot
-        dispatch(owner, events)
+        applySnapshot(owner, snapshot)
     } catch (error) {
         if (isCurrent(owner) && owner.mode === 'get' && owner.request === request) {
             report('GET poll failed', error)
