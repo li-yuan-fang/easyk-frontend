@@ -5,8 +5,8 @@
             class="playing-status"
             color="#1989fa"
             background="#ecf9ff"
-            :left-icon="current ? 'play-circle-o' : 'stop-circle-o'"
-            :text="current ? `正在播放: ${current.title} (来自 ${current.order})` : '当前无播放源'"
+            :left-icon="status_icon"
+            :text="status_text"
         >
             <template
                 #right-icon
@@ -92,7 +92,7 @@ import Tabbar from './components/tabbar.vue';
 import Panel from './components/panel.vue';
 import BookDialog from './components/book-dialog.vue';
 import PassDialog from './components/pass-dialog.vue';
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import type { BookListItem } from './common/book_interfaces';
 import { showConfirmDialog, showToast } from 'vant';
 import * as EasyKState from '@/common/easyk_state';
@@ -106,6 +106,14 @@ const book_list = ref()
 
 //当前播放
 const current = ref<BookListItem | undefined>(undefined)
+const paused = ref<boolean>(false)
+const status_icon = computed<string>(() : string => current.value ?
+                                                    (paused.value ? 'pause-circle-o' : 'play-circle-o') :
+                                                    'stop-circle-o')
+const status_text = computed<string>(() : string => {
+    if (!current.value) return '当前无播放源'
+    return `${paused.value ? '暂停' : '正在播放'}: ${current.value.title} (来自 ${current.value.order})`
+})
 
 //控制面板
 const panel = ref()
@@ -142,9 +150,7 @@ const handleBubbleMove = () => {
 }
 
 //刷新当前播放
-const reloadCurrent = (data : Readonly<BookListItem> | null) : void => {
-    current.value = data ?? undefined
-}
+const reloadCurrent = (data : Readonly<BookListItem> | null) : void => <any> (current.value = data ?? undefined)
 
 //刷新已点列表
 const handleBookRefresh = () => {
@@ -184,6 +190,37 @@ const handleRandom = () => {
     })
 }
 
+const registerStatusHandler = () => {
+    let first : boolean = true
+
+    const updatePause = (state : EasyKState.PlayState) => {
+        switch (state) {
+            case EasyKState.PlayState.Playing:
+                paused.value = false
+                break;
+            case EasyKState.PlayState.Paused:
+                paused.value = true
+                break;
+        }
+    }
+
+    EasyKState.usePush((data : Readonly<BookListItem> | null) => {
+        if (first) {
+            let snapshot = EasyKState.getSnapshot()
+            if (snapshot && data) updatePause(snapshot.player.state)
+
+            first = false
+        } else {
+            paused.value = false
+        }
+        
+        reloadCurrent(data)
+    })
+    
+    EasyKState.usePlaying((state : Readonly<Pick<EasyKState.PlayerState, "state" | "current" | "rate">>) =>
+        updatePause(state.state))
+}
+
 onMounted(() => {
     let max_top = 0
 
@@ -201,7 +238,7 @@ onMounted(() => {
     bubble_offset.value.x = 24
     bubble_offset.value.y = max_top - 24 - 48
 
-    EasyKState.usePush(reloadCurrent)
+    registerStatusHandler()
 })
 
 </script>
