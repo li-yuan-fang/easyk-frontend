@@ -485,7 +485,7 @@ onMounted(() => {
 }
 
 .panel-scroll-wrapper {
-    max-height: 70vh;
+    max-height: 60vh;
     overflow-y: auto;
     touch-action: pan-y;
     overscroll-behavior: contain;

@@ -42,15 +42,12 @@ const duration = ref<number>(0)
 
 const rate = ref<number>(1.0)
 
-const progress_step = computed(() => (duration.value >= 0) ? (rate.value / duration.value) : 0.0)
+const progress_step = computed(() => (duration.value > 0) ? (rate.value / duration.value) : 0.0)
 
-const current_text = ref<string>(unknown_time)
-const duration_text = ref<string>(unknown_time)
+const current_text = computed(() => (duration.value > 0) ? formatDuration(current.value * duration.value) : unknown_time)
+const duration_text = computed(() => (duration.value > 0) ? formatDuration(duration.value) : unknown_time)
 
 let timer : ReturnType<typeof setInterval> | null = null
-
-watch(duration, () => duration_text.value = formatDuration(duration.value))
-watch(current, () => current_text.value = formatDuration(current.value * duration.value))
 
 const props = defineProps(['modelValue', 'disabled'])
 const emit = defineEmits(['update:modelValue'])
@@ -81,8 +78,6 @@ const closeProgress = () => {
 
     emit('update:modelValue', false)
     rate.value = 1.0
-    current_text.value = unknown_time
-    duration_text.value = unknown_time
 }
 
 const onPlayerPush = (media : BookListItem | null) => {
