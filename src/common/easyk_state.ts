@@ -9,6 +9,7 @@ const GET_POLL_INTERVAL_MS = 5000
 const SSE_RECOVERY_GET_COUNT = 6
 const SSE_CONNECT_TIMEOUT_MS = 10000
 const GET_TIMEOUT_MS = 10000
+const PLAYER_CURRENT_ERROR_THRESHOLD_S = 2.0
 
 export {
     reload,
@@ -223,11 +224,16 @@ const snapshotEvents = (previous: Snapshot | undefined, next: Snapshot): StateEv
     if (before.state === PlayState.Stopped) {
         return after.state === PlayState.Stopped ? [] : [loadedEvent(after)]
     }
-    if (after.state === PlayState.Stopped) return [playingEvent(after)]
+    if (after.state === PlayState.Stopped) return [pushEvent(next.media)]
     if (before.duration !== after.duration) return [loadedEvent(after)]
 
-    // 仅进度变化仍提交新快照，但不单独通知业务钩子。
-    return before.state !== after.state || before.rate !== after.rate ? [playingEvent(after)] : []
+    if (after.duration === 0) {
+        return [pushEvent(next.media)]
+    } else if (Math.abs(after.current - before.current) > (PLAYER_CURRENT_ERROR_THRESHOLD_S / after.duration)) {
+        return [playingEvent(after)]
+    }
+
+    return (before.state !== after.state || before.rate !== after.rate) ? [playingEvent(after)] : []
 }
 
 // 只有这些同步异常才说明回调依赖的组件/作用域已销毁，业务逻辑自身的异常不移除订阅。
@@ -478,6 +484,9 @@ const isVisible = (): boolean => {
 const listenForVisibility = (owner: Session): void => {
     if (typeof document === 'undefined') return
     const onVisibility = () => {
+        // 显示时同步一次
+        sync()
+
         if (!isCurrent(owner) || owner.mode !== 'get') return
         const connection = owner.connection
         if (!isVisible() && connection?.probe && !connection.opened) {
@@ -670,6 +679,8 @@ const receive = (owner: Session, connection: Connection, type: EventName, raw: u
     if (!validConnection(owner, connection) || !connection.opened || !owner.snapshot) return
     try {
         if (typeof raw !== 'string') throw new Error('SSE data must be JSON text')
+        // console.log(`Event ${type}: ${raw}`)
+
         const data: unknown = JSON.parse(raw)
         const previous = owner.snapshot
         let next: Snapshot
