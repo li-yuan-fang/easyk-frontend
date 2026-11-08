@@ -120,8 +120,11 @@ const onPlayerLoaded = (state : EasyKState.PlayerState) => {
     current.value = state.current
     rate.value = state.rate
 
-    if (timer) clearInterval(timer)
-    timer = setInterval(handleStep, 1000)
+    if (timer) {
+        clearInterval(timer)
+        timer = null
+    }
+    if (state.state == EasyKState.PlayState.Playing) timer = setInterval(handleStep, 1000)
 }
 
 //恢复到准确的状态
