@@ -6,7 +6,7 @@ const STATE_URL = '/api/state'
 const SSE_MAX_CONSECUTIVE_FAILURES = 3
 const SSE_RETRY_INTERVAL_MS = 2000
 const GET_POLL_INTERVAL_MS = 5000
-const SSE_RECOVERY_GET_COUNT = 6
+const SSE_RECOVERY_GET_COUNT = 2
 const SSE_CONNECT_TIMEOUT_MS = 10000
 const GET_TIMEOUT_MS = 10000
 const PLAYER_CURRENT_ERROR_THRESHOLD_S = 2.0
@@ -355,35 +355,33 @@ const getSnapshot = (): Snapshot | undefined => {
     return session?.snapshot
 }
 
-/** 本地调整已加载媒体的进度；返回值仅表示本地是否受理，不发起控制请求。 */
-const seek = (current: number): boolean => {
-    if (typeof current !== 'number' || !Number.isFinite(current) || current < 0 || current > 1) return false
+const seek = (current: number) => {
+    if (typeof current !== 'number' || !Number.isFinite(current) || current < 0 || current > 1) return
     const owner = session
     const snapshot = owner?.snapshot
-    if (!owner || !snapshot || snapshot.media === null || snapshot.player.state === PlayState.Stopped) return false
+    if (!owner || !snapshot || snapshot.media === null || snapshot.player.state === PlayState.Stopped) return
 
     const player = { ...snapshot.player, current }
     // 先提交现有快照再通知；后续远端更新沿用原有事件系统。
     owner.snapshot = { ...snapshot, player }
     dispatch(owner, [playingEvent(player)])
-    return true
+    
+    if (owner.mode == 'get') sync()
 }
 
-/** 本地清空旧媒体及播放器，下一首由后续远端更新确定，不发起切歌请求。 */
-const push = (): boolean => {
+const push = () => {
     const owner = session
-    if (!owner?.snapshot) return false
+    if (!owner?.snapshot) return
 
     owner.snapshot = { media: null, player: stoppedPlayer() }
     dispatch(owner, [pushEvent(null)])
-    return true
 }
 
 /** 按当前本地状态切换播放与暂停，不发起控制请求；停止或未加载时不受理。 */
-const pause = (): boolean => {
+const pause = () => {
     const owner = session
     const snapshot = owner?.snapshot
-    if (!owner || !snapshot || snapshot.media === null || snapshot.player.state === PlayState.Stopped) return false
+    if (!owner || !snapshot || snapshot.media === null || snapshot.player.state === PlayState.Stopped) return
 
     const player = {
         ...snapshot.player,
@@ -391,7 +389,8 @@ const pause = (): boolean => {
     }
     owner.snapshot = { ...snapshot, player }
     dispatch(owner, [playingEvent(player)])
-    return true
+
+    if (owner.mode == 'get') sync()
 }
 
 const requestSnapshot = (): SnapshotRequest => {
